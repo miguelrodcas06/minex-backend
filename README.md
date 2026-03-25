@@ -1,10 +1,10 @@
 # MineX
 
-Proyecto de MineX usando node.js
+Proyecto de MineX usando node.js para crear la API
 
 ## Enlace al repositorio de GitHub
 
-[https://github.com/xmrodcas971-boop/react-native-gestion-cultural](https://github.com/xmrodcas971-boop/react-native-gestion-cultural)
+[https://github.com/miguelrodcas06/minex-backend](https://github.com/miguelrodcas06/minex-backend)
 
 ## Datos para la conexión a la base de datos
 
