@@ -1,0 +1,33 @@
+{
+  "name": "minex-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "jest": "^30.3.0",
+    "nodemon": "^3.1.11",
+    "sequelize-auto": "^0.8.8",
+    "supertest": "^7.2.2"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mysql2": "^3.18.2",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^8.0.3",
+    "sequelize": "^6.37.7",
+    "yahoo-finance2": "^3.13.2"
+  }
+}

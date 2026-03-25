@@ -1,0 +1,93 @@
+### ==========================================
+### PRUEBA COMPLETA: FLUJO DE ALERTAS MINEX
+### ==========================================
+
+### PASO 1: Iniciar sesión para conseguir el Token
+# Dale a "Send Request" aquí. Copia el token que te devuelva abajo.
+POST http://localhost:3000/api/usuarios/login
+Content-Type: application/json
+
+{
+  "email": "miguelrodriguezcasado06@gmail.com",
+  "password": "ADMIN"
+}
+
+### ----------------------------------------------------
+### PEGA TU TOKEN AQUÍ ABAJO (Sin las comillas)
+### ----------------------------------------------------
+@tokenVigilante = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZF91c2VyIjo1LCJlbWFpbCI6Im1pZ3VlbHJvZHJpZ3VlemNhc2FkbzA2QGdtYWlsLmNvbSIsImlhdCI6MTc3NDQzMjA2MiwiZXhwIjoxNzc0NTE4NDYyfQ.fCBqNURhoTG17iiKvIn66K7LsBJco3ynxcDRQJg2Htg
+
+
+### ==========================================
+### ZONA DE PRUEBAS DEL USUARIO
+### ==========================================
+
+### PASO 2: Crear una "Alerta Trampa"
+# Vamos a poner un precio muy alto (ej: 100000) para que el Vigilante 
+# NO la dispare todavía y nos dé tiempo a probar el Toggle y el Borrado.
+POST http://localhost:3000/api/alertas
+Content-Type: application/json
+Authorization: Bearer {{tokenVigilante}}
+
+{
+  "id_mineral": 1, 
+  "threshold_price": 100000.00,
+  "condition_type": "above"
+}
+
+### PASO 3: Ver mis alertas
+# Aquí deberías ver la alerta que acabas de crear.
+# ⚠️ IMPORTANTE: Fíjate en el "id_alert" que te devuelve. ¿Es el 1, el 5, el 20?
+GET http://localhost:3000/api/alertas
+Authorization: Bearer {{tokenVigilante}}
+
+
+### PASO 4: Pausar la alerta (Toggle)
+# ⚠️ CAMBIA el "1" del final de esta URL por el ID que viste en el PASO 3.
+# Si le das a enviar, verás que te responde "Alerta desactivada correctamente"
+PATCH http://localhost:3000/api/alertas/toggle/10
+Authorization: Bearer {{tokenVigilante}}
+
+
+### PASO 5: Ver mis alertas de nuevo (Comprobación de la pausa)
+# Vuelve a ejecutar este GET. La alerta DEBE seguir apareciendo, 
+# pero ahora su campo "is_active" debería ser 0.
+GET http://localhost:3000/api/alertas
+Authorization: Bearer {{tokenVigilante}}
+
+
+### PASO 6: Borrar manualmente (Papelera)
+# ⚠️ CAMBIA el "1" del final de esta URL por tu ID.
+# Si el usuario se cansa de la alerta, la borra para siempre.
+DELETE http://localhost:3000/api/alertas/8
+Authorization: Bearer {{tokenVigilante}}
+
+
+### PASO 7: Comprobación final
+# Haz un último GET. ¡La alerta ya no debería estar en la lista!
+GET http://localhost:3000/api/alertas
+Authorization: Bearer {{tokenVigilante}}
+
+
+### ==========================================
+### ZONA DE PRUEBA DEL VIGILANTE (EL CORREO)
+### ==========================================
+
+### PASO 8: La alerta suicida
+# Ahora crea una alerta con un precio ridículamente bajo (ej: 1.00).
+# Como el oro vale más de 1$, el Vigilante la detectará en su próxima ronda,
+# enviará el correo y la BORRARÁ automáticamente de la base de datos.
+POST http://localhost:3000/api/alertas
+Content-Type: application/json
+Authorization: Bearer {{tokenVigilante}}
+
+{
+  "id_mineral": 1, 
+  "threshold_price": 1.00,
+  "condition_type": "above"
+}
+
+
+# Tras hacer el PASO 8, espera a que el Vigilante salte en la consola de tu servidor.
+# Cuando veas que manda el correo, vuelve a hacer el PASO 3 (GET /api/alertas).
+# Verás que la alerta ha desaparecido mágicamente porque ya se cumplió. 🪄

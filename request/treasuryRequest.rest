@@ -1,0 +1,52 @@
+### LOGIN DE USUARIO (Para conseguir el Token)
+POST http://localhost:3000/api/usuarios/login
+Content-Type: application/json
+
+{
+    "email": "prueba@minex.com", 
+    "password": "Prueba123" 
+}
+
+### AÑADIR MINERAL A LA TESORERÍA (Protegido)
+POST http://localhost:3000/api/tesoreria
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZF91c2VyIjoyLCJlbWFpbCI6InBydWViYUBtaW5leC5jb20iLCJpYXQiOjE3NzM4MjYxNDksImV4cCI6MTc3MzkxMjU0OX0.JoygGso-eIsaTdx6Oj1a5FJnZSlr_RRd8gXPvg7MiH0
+Content-Type: application/json
+
+{
+    "mineral": "oro",
+    "cantidad": 25.5
+}
+
+### AÑADIR MINERAL A LA TESORERÍA (Protegido)
+POST http://localhost:3000/api/tesoreria
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZF91c2VyIjoyLCJlbWFpbCI6InBydWViYUBtaW5leC5jb20iLCJpYXQiOjE3NzM4MjYxNDksImV4cCI6MTc3MzkxMjU0OX0.JoygGso-eIsaTdx6Oj1a5FJnZSlr_RRd8gXPvg7MiH0
+Content-Type: application/json
+
+{
+    "mineral": "plata",
+    "cantidad": 1.5
+}
+
+### VER MI TESORERÍA Y MIS GANANCIAS (Protegido)
+GET http://localhost:3000/api/tesoreria
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZF91c2VyIjoyLCJlbWFpbCI6InBydWViYUBtaW5leC5jb20iLCJpYXQiOjE3NzQzNDEyODEsImV4cCI6MTc3NDQyNzY4MX0.tQCnvdnfkXowD93uGSU-l7eYkc2YRaCqzn0Yuq-IeJ8
+
+### Vender mineral
+POST http://localhost:3000/api/tesoreria/vender
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZF91c2VyIjoyLCJlbWFpbCI6InBydWViYUBtaW5leC5jb20iLCJpYXQiOjE3NzM4MjYxNDksImV4cCI6MTc3MzkxMjU0OX0.JoygGso-eIsaTdx6Oj1a5FJnZSlr_RRd8gXPvg7MiH0
+
+{
+  "id_item": 11, 
+  "cantidad": 1
+}
+
+### AÑADIR MINERAL A LA TESORERÍA
+POST http://localhost:3000/api/tesoreria
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZF91c2VyIjoyLCJlbWFpbCI6InBydWViYUBtaW5leC5jb20iLCJpYXQiOjE3NzM4MjYxNDksImV4cCI6MTc3MzkxMjU0OX0.JoygGso-eIsaTdx6Oj1a5FJnZSlr_RRd8gXPvg7MiH0
+Content-Type: application/json
+
+{
+    "mineral": "oro",
+    "cantidad": 1.5
+}

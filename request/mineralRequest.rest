@@ -1,0 +1,87 @@
+### ==============================================================
+### 📈 COTIZACIONES EN TIEMPO REAL (API YAHOO FINANCE)
+### ==============================================================
+
+### 1. POR DEFECTO (USD) -----------------------------------------
+
+### GET precio del oro (Devuelve USD por defecto)
+GET http://localhost:3000/api/minerales/oro
+
+### GET precio del cobre (Devuelve USD por defecto)
+GET http://localhost:3000/api/minerales/cobre
+
+### GET precio de la plata
+GET http://localhost:3000/api/minerales/plata
+
+
+### 2. CONVERSIÓN DE DIVISAS -------------------------------------
+
+### GET precio del oro en EUROS (EUR)
+GET http://localhost:3000/api/minerales/oro?moneda=EUR
+
+### GET precio de la plata en LIBRAS ESTERLINAS (GBP)
+GET http://localhost:3000/api/minerales/plata?moneda=GBP
+
+### GET precio del platino en YENES JAPONESES (JPY)
+GET http://localhost:3000/api/minerales/platino?moneda=JPY
+
+
+### 3. CONTROL DE ERRORES Y CASOS EXTREMOS -----------------------
+
+### GET mineral que no existe - NOT FOUND (404)
+GET http://localhost:3000/api/minerales/kriptonita
+
+### GET moneda inventada (El servidor no rompe, devuelve USD por seguridad)
+GET http://localhost:3000/api/minerales/oro?moneda=MONEDAINVENTADA
+
+### ==============================================================
+### 📊 HISTÓRICO PARA GRÁFICAS (DATOS SIMULADOS)
+### ==============================================================
+
+### 1. PERÍODO: 30 DÍAS ------------------------------------------
+
+### GET histórico del oro (últimos 30 días)
+GET http://localhost:3000/api/minerales/oro/historico?periodo=30d
+
+### GET histórico del cobre (últimos 30 días)
+GET http://localhost:3000/api/minerales/cobre/historico?periodo=30d
+
+
+### 2. PERÍODO: 12 MESES -----------------------------------------
+
+### GET histórico de la plata (últimos 12 meses)
+GET http://localhost:3000/api/minerales/plata/historico?periodo=12m
+
+
+### 3. PERÍODO: 5 AÑOS -------------------------------------------
+
+### GET histórico del platino (últimos 5 años)
+GET http://localhost:3000/api/minerales/platino/historico?periodo=5y
+
+
+### 4. CONTROL DE ERRORES Y CASOS EXTREMOS -----------------------
+
+### GET histórico con un período que no existe - BAD REQUEST (400)
+GET http://localhost:3000/api/minerales/oro/historico?periodo=100d
+
+### ==============================================================
+### 📰 NOTICIAS AUTOMÁTICAS (YAHOO FINANCE)
+### ==============================================================
+
+### GET Últimas noticias del mercado (Por defecto)
+GET http://localhost:3000/api/minerales/noticias
+
+### GET Noticias específicas sobre la plata
+GET http://localhost:3000/api/minerales/noticias?tema=silver
+
+### 🔋 Noticias sobre el Litio (muy demandado para baterías)
+GET http://localhost:3000/api/minerales/noticias?tema=lithium
+
+### 🥉 Noticias sobre el mercado del Cobre
+GET http://localhost:3000/api/minerales/noticias?tema=copper%20market
+
+### ⛏️ Noticias de una empresa minera específica (ej. Barrick Gold)
+GET http://localhost:3000/api/minerales/noticias?tema=Barrick%20Gold
+
+### 💎 Noticias sobre diamantes
+GET http://localhost:3000/api/minerales/noticias?tema=diamonds

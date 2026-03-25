@@ -1,0 +1,82 @@
+### Registrar un nuevo usuario en MineX
+POST http://localhost:3000/api/usuarios
+Content-Type: application/json
+
+{
+    "username": "miguel-prueba_minex",
+    "email": "miguel-prueba@minex.com",
+    "password": "MiPasswordSuperSeguro123"
+}
+
+### Registrar un nuevo usuario en MineX
+POST http://localhost:3000/api/usuarios
+Content-Type: application/json
+
+{
+    "username": "prueba_minex",
+    "email": "prueba@minex.com",
+    "password": "Prueba123"
+}
+
+### Hacer Login con el usuario
+POST http://localhost:3000/api/usuarios/login
+Content-Type: application/json
+
+{
+    "email": "miguel@minex.com",
+    "password": "MiPasswordSuperSeguro123"
+}
+
+### Hacer Login con el usuario
+POST http://localhost:3000/api/usuarios/login
+Content-Type: application/json
+
+{
+    "email": "miguel-prueba@minex.com",
+    "password": "MiPasswordSuperSeguro123"
+}
+
+
+### Hacer Login con el usuario (Dar Fallo)
+POST http://localhost:3000/api/usuarios/login
+Content-Type: application/json
+
+{
+    "email": "miguel@minex.com",
+    "password": "ErrorPassword"
+}
+
+### Ver mi perfil (Ruta protegida)
+GET http://localhost:3000/api/usuarios/perfil
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZF91c2VyIjoyLCJlbWFpbCI6InBydWViYUBtaW5leC5jb20iLCJpYXQiOjE3NzM4MjYxNDksImV4cCI6MTc3MzkxMjU0OX0.JoygGso-eIsaTdx6Oj1a5FJnZSlr_RRd8gXPvg7MiH0
+### el token cambia cada vez que se hace login
+
+### Obtener todos los usuarios (Requiere Token)
+GET http://localhost:3000/api/usuarios
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZF91c2VyIjozLCJlbWFpbCI6Im1pZ3VlbEBtaW5leC5jb20iLCJpYXQiOjE3NzMzODgzNDYsImV4cCI6MTc3MzQ3NDc0Nn0.fqf0zEfo9Pj0unmqt1NwZ82rHHdhhuq1cW6c02Gg1Ew
+
+### Actualizar mi perfil (Requiere Token)
+PUT http://localhost:3000/api/usuarios/perfil
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZF91c2VyIjoxLCJlbWFpbCI6Im1pZ3VlbEBtaW5leC5jb20iLCJpYXQiOjE3NzI5NzY0NDksImV4cCI6MTc3MzA2Mjg0OX0._VpMjqqB2jBGa-sa-VBSUb_e0ADYWxkQc3BofdO-KRo
+Content-Type: application/json
+
+{
+    "username": "miguel_minex_pro"
+}
+
+### DAR DE BAJA MI CUENTA
+PUT http://localhost:3000/api/usuarios/baja
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZF91c2VyIjozLCJlbWFpbCI6Im1pZ3VlbEBtaW5leC5jb20iLCJpYXQiOjE3NzMzODgzNDYsImV4cCI6MTc3MzQ3NDc0Nn0.fqf0zEfo9Pj0unmqt1NwZ82rHHdhhuq1cW6c02Gg1Ew
+
+### REACTIVAR MI CUENTA (Pública)
+PUT http://localhost:3000/api/usuarios/reactivar
+Content-Type: application/json
+
+{
+  "email": "miguel@minex.com",
+  "password": "MiPasswordSuperSeguro123"
+}
+
+### RECUPERAR SALDO
+GET http://localhost:3000/api/usuarios/saldo
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZF91c2VyIjoyLCJlbWFpbCI6InBydWViYUBtaW5leC5jb20iLCJpYXQiOjE3NzM4MjYxNDksImV4cCI6MTc3MzkxMjU0OX0.JoygGso-eIsaTdx6Oj1a5FJnZSlr_RRd8gXPvg7MiH0
