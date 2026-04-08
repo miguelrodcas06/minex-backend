@@ -12,19 +12,17 @@ class MineralService {
       cobre: "HG=F",
     };
 
-    // Factor de conversión: 1 Onza Troy = 31.1035 gramos aprox.
-    const GRAMOS_POR_ONZA = 31.1034768;
+    // Factores de conversión
+    const GRAMOS_POR_ONZA_TROY = 31.1034768; // Metales preciosos (GC=F, SI=F, PL=F, PA=F)
+    const GRAMOS_POR_LIBRA     = 453.592;    // Cobre (HG=F) → Yahoo lo cotiza en USD/libra
 
     const ticker = diccionarioMinerales[mineralName.toLowerCase()];
     if (!ticker) return null;
 
-    // 1. Consultamos el precio base (Yahoo lo da por ONZA en USD)
     const cotizacion = await yahooFinance.quote(ticker);
 
-    // --- CAMBIO AQUÍ: Convertimos el precio de Onza a Gramo inmediatamente ---
-    let precioPorOnza = cotizacion.regularMarketPrice;
-    let precioFinal = precioPorOnza / GRAMOS_POR_ONZA;
-    // ------------------------------------------------------------------------
+    const divisor = ticker === "HG=F" ? GRAMOS_POR_LIBRA : GRAMOS_POR_ONZA_TROY;
+    let precioFinal = cotizacion.regularMarketPrice / divisor;
 
     let monedaFinal = cotizacion.currency || "USD";
     let target = targetCurrency.toUpperCase();
@@ -67,7 +65,8 @@ class MineralService {
       cobre: "HG=F",
     };
 
-    const GRAMOS_POR_ONZA = 31.1034768;
+    const GRAMOS_POR_ONZA_TROY = 31.1034768;
+    const GRAMOS_POR_LIBRA     = 453.592;
     const mineralLower = mineralName.toLowerCase();
     const ticker = diccionarioMinerales[mineralLower];
 
@@ -105,8 +104,8 @@ class MineralService {
 
       // 4. Formateamos los datos recibidos
       const historicoFormateado = historicalData.map((item) => {
-        // Yahoo devuelve el precio de cierre en 'close' (por onza) -> Lo pasamos a gramos
-        let precioEnGramos = item.close / GRAMOS_POR_ONZA;
+        const divisor = ticker === "HG=F" ? GRAMOS_POR_LIBRA : GRAMOS_POR_ONZA_TROY;
+        let precioEnGramos = item.close / divisor;
 
         // Damos formato a la fecha dependiendo del período
         let fechaString = item.date.toISOString().split("T")[0]; // YYYY-MM-DD

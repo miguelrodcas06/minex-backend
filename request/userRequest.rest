@@ -32,8 +32,8 @@ POST http://localhost:3000/api/usuarios/login
 Content-Type: application/json
 
 {
-    "email": "miguel-prueba@minex.com",
-    "password": "MiPasswordSuperSeguro123"
+    "email": "miguelrodriguezcasado06@gmail.com",
+    "password": "ADMIN"
 }
 
 
@@ -48,7 +48,7 @@ Content-Type: application/json
 
 ### Ver mi perfil (Ruta protegida)
 GET http://localhost:3000/api/usuarios/perfil
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZF91c2VyIjoyLCJlbWFpbCI6InBydWViYUBtaW5leC5jb20iLCJpYXQiOjE3NzM4MjYxNDksImV4cCI6MTc3MzkxMjU0OX0.JoygGso-eIsaTdx6Oj1a5FJnZSlr_RRd8gXPvg7MiH0
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZF91c2VyIjo1LCJlbWFpbCI6Im1pZ3VlbHJvZHJpZ3VlemNhc2FkbzA2QGdtYWlsLmNvbSIsImlhdCI6MTc3NTQ2MzA0MSwiZXhwIjoxNzc1NTQ5NDQxfQ.xqCtwZGJyvqLAZrc0MEa_CMFkVFGNSRv5Q3jkww5Wuo
 ### el token cambia cada vez que se hace login
 
 ### Obtener todos los usuarios (Requiere Token)
