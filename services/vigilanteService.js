@@ -32,12 +32,12 @@ class VigilanteService {
     console.log("🕵️‍♂️ [Vigilante] Revisando alertas de precios...");
 
     try {
-      // 1. Buscar todas las alertas ACTIVAS
+      // 1. Buscar todas las alertas ACTIVAS de usuarios con cuenta activa
       const alertasActivas = await PriceAlert.findAll({
         where: { is_active: 1 },
         include: [
           { model: Mineral, as: "id_mineral_mineral", attributes: ["name", "symbol"] },
-          { model: User, as: "id_user_user", attributes: ["email", "username"] },
+          { model: User, as: "id_user_user", attributes: ["email", "username"], where: { is_active: 1 } },
         ],
       });
 
