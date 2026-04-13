@@ -2,6 +2,7 @@ var DataTypes = require("sequelize").DataTypes;
 var _alertNotifications = require("./alertNotifications");
 var _minerals = require("./minerals");
 var _priceAlerts = require("./priceAlerts");
+var _products = require("./products");
 var _treasuries = require("./treasuries");
 var _treasuryItems = require("./treasuryItems");
 var _users = require("./users");
@@ -10,12 +11,16 @@ function initModels(sequelize) {
   var alertNotifications = _alertNotifications(sequelize, DataTypes);
   var minerals = _minerals(sequelize, DataTypes);
   var priceAlerts = _priceAlerts(sequelize, DataTypes);
+  var products = _products(sequelize, DataTypes);
   var treasuries = _treasuries(sequelize, DataTypes);
   var treasuryItems = _treasuryItems(sequelize, DataTypes);
   var users = _users(sequelize, DataTypes);
 
   priceAlerts.belongsTo(minerals, { as: "id_mineral_mineral", foreignKey: "id_mineral"});
   minerals.hasMany(priceAlerts, { as: "price_alerts", foreignKey: "id_mineral"});
+
+  products.belongsTo(minerals, { as: "mineral", foreignKey: "id_mineral" });
+  minerals.hasMany(products, { as: "products", foreignKey: "id_mineral" });
   
   treasuryItems.belongsTo(minerals, { as: "id_mineral_mineral", foreignKey: "id_mineral"});
   minerals.hasMany(treasuryItems, { as: "treasury_items", foreignKey: "id_mineral"});
@@ -36,6 +41,7 @@ function initModels(sequelize) {
     alertNotifications,
     minerals,
     priceAlerts,
+    products,
     treasuries,
     treasuryItems,
     users,

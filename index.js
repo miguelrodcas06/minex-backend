@@ -13,6 +13,7 @@ const mineralRoutes = require("./routes/mineralRoutes");
 const userRoutes = require("./routes/userRoutes"); 
 const treasuryRoutes = require("./routes/treasuryRoutes");
 const alertRoutes = require('./routes/alertRoutes');
+const productRoutes = require('./routes/productRoutes');
 
 // Importamos el servicio del Vigilante
 const vigilanteService = require('./services/vigilanteService'); // <--- AÑADIR ESTA LÍNEA
@@ -46,6 +47,7 @@ app.use("/api/minerales", mineralRoutes);
 app.use("/api/usuarios", userRoutes); 
 app.use("/api/tesoreria", treasuryRoutes);
 app.use("/api/alertas", alertRoutes);
+app.use("/api/productos", productRoutes);
 
 // Ruta base para comprobar que el servidor responde
 app.get("/", (req, res) => {

@@ -1,0 +1,62 @@
+### ==============================================================
+### 🪙 CATÁLOGO DE PRODUCTOS (MONEDAS, LINGOTES Y BARRAS)
+### ==============================================================
+
+### 1. CATÁLOGO COMPLETO -----------------------------------------
+
+### GET todos los productos
+GET http://localhost:3000/api/productos
+
+
+### 2. FILTROS POR TIPO ------------------------------------------
+
+### GET solo monedas
+GET http://localhost:3000/api/productos?type=coin
+
+### GET solo lingotes
+GET http://localhost:3000/api/productos?type=ingot
+
+### GET solo barras
+GET http://localhost:3000/api/productos?type=bar
+
+### GET solo rounds
+GET http://localhost:3000/api/productos?type=round
+
+
+### 3. FILTROS POR METAL -----------------------------------------
+
+### GET productos de oro
+GET http://localhost:3000/api/productos?mineral=Gold
+
+### GET productos de plata
+GET http://localhost:3000/api/productos?mineral=Silver
+
+
+### 4. FILTROS COMBINADOS ----------------------------------------
+
+### GET monedas de oro exclusivas
+GET http://localhost:3000/api/productos?type=coin&mineral=Gold&exclusive=true
+
+### GET lingotes de plata
+GET http://localhost:3000/api/productos?type=ingot&mineral=Silver
+
+### GET todos los productos exclusivos
+GET http://localhost:3000/api/productos?exclusive=true
+
+
+### 5. DETALLE DE UN PRODUCTO CON PRECIO ACTUAL ------------------
+
+### GET producto con id 1 (precio calculado en tiempo real)
+GET http://localhost:3000/api/productos/1
+
+### GET producto con id 2
+GET http://localhost:3000/api/productos/2
+
+### GET producto con id 7
+GET http://localhost:3000/api/productos/7
+
+
+### 6. CONTROL DE ERRORES ----------------------------------------
+
+### GET producto que no existe - NOT FOUND (404)
+GET http://localhost:3000/api/productos/9999
