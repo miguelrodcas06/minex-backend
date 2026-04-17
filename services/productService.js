@@ -54,9 +54,10 @@ class ProductService {
     try {
       const cotizacion = await mineralService.getCotizacion(product.mineral.name);
       if (cotizacion && cotizacion.precio) {
-        const spot = cotizacion.precio;
+        const spot = cotizacion.precio; // precio por gramo
+        const gramos = parseFloat(product.weight_oz) * 31.1035;
         const premium = 1 + parseFloat(product.premium_pct) / 100;
-        precio_actual = parseFloat((spot * parseFloat(product.weight_oz) * premium).toFixed(2));
+        precio_actual = parseFloat((spot * gramos * premium).toFixed(2));
       }
     } catch (_) {
       // Si falla la cotización, devolvemos el producto sin precio
