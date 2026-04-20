@@ -8,6 +8,19 @@
 const YahooFinance = require("yahoo-finance2").default;
 const yahooFinance = new YahooFinance();
 
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutos
+const cache = {};
+
+function getCached(key) {
+  const entry = cache[key];
+  if (entry && Date.now() - entry.timestamp < CACHE_TTL_MS) return entry.data;
+  return null;
+}
+
+function setCache(key, data) {
+  cache[key] = { data, timestamp: Date.now() };
+}
+
 /**
  * Servicio que encapsula todas las consultas de datos de metales preciosos a Yahoo Finance.
  */
@@ -36,6 +49,10 @@ class MineralService {
     const ticker = diccionarioMinerales[mineralName.toLowerCase()];
     if (!ticker) return null;
 
+    const cacheKey = `cotizacion_${ticker}`;
+    const cached = getCached(cacheKey);
+    if (cached) return cached;
+
     const cotizacion = await yahooFinance.quote(ticker);
 
     const divisor = ticker === "HG=F" ? GRAMOS_POR_LIBRA : GRAMOS_POR_ONZA_TROY;
@@ -59,15 +76,16 @@ class MineralService {
       }
     }
 
-    return {
+    const result = {
       mineral: mineralName.toLowerCase(),
       simbolo: ticker,
-      // Usamos 4 decimales porque en gramos el precio es más pequeño y requiere precisión
       precio: Number(precioFinal.toFixed(4)),
       moneda: monedaFinal,
-      unidad: "gramo", // Añadimos esto para que quede claro en el JSON
+      unidad: "gramo",
       fecha_actualizacion: new Date(cotizacion.regularMarketTime),
     };
+    setCache(cacheKey, result);
+    return result;
   }
   /**
    * Devuelve el histórico de precios de un mineral para el período seleccionado.
@@ -93,6 +111,10 @@ class MineralService {
     const ticker = diccionarioMinerales[mineralLower];
 
     if (!ticker) return null;
+
+    const cacheKey = `historico_${ticker}_${periodo}`;
+    const cached = getCached(cacheKey);
+    if (cached) return cached;
 
     // 1. Calculamos las fechas de inicio y fin
     const endDate = new Date();
@@ -141,13 +163,15 @@ class MineralService {
         };
       });
 
-      return {
+      const result = {
         mineral: mineralLower,
         periodoSeleccionado: periodo,
-        precioActual: precioHoy, // El precio exacto en tiempo real
+        precioActual: precioHoy,
         unidad: "gramo",
         historico: historicoFormateado,
       };
+      setCache(cacheKey, result);
+      return result;
     } catch (error) {
       console.error(`🚨 Error obteniendo el histórico real de ${mineralName}:`, error);
       return null;
