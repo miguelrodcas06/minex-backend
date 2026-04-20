@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Servicio de alertas de precio: CRUD completo sobre la tabla `price_alerts`.
+ * Incluye toggle de estado activo/pausado y eliminación manual por el usuario.
+ * @module services/alertService
+ */
+
 // services/alertService.js
 
 const initModels = require("../models/init-models.js").initModels;
@@ -8,8 +14,15 @@ const models = initModels(sequelize);
 const PriceAlert = models.priceAlerts;
 const Mineral = models.minerals;
 
+/**
+ * Servicio de negocio para gestión de alertas de precio de minerales.
+ */
 class AlertService {
-  // 1. Crear una nueva alerta
+  /**
+   * Crea una nueva alerta de precio activa para el usuario indicado.
+   * @param {{ id_user: number, id_mineral: number, threshold_price: number, condition_type: "above"|"below" }} datosAlerta
+   * @returns {Promise<object>} Instancia Sequelize de la alerta creada.
+   */
   async crearAlerta(datosAlerta) {
     const { id_user, id_mineral, threshold_price, condition_type } = datosAlerta;
 
@@ -24,7 +37,12 @@ class AlertService {
     return nuevaAlerta;
   }
 
-  // 2. Obtener TODAS las alertas de un usuario (Activas y Pausadas)
+  /**
+   * Devuelve todas las alertas de un usuario (activas y pausadas), ordenadas por fecha DESC.
+   * Incluye el nombre y símbolo del mineral asociado.
+   * @param {number} id_user - ID del usuario.
+   * @returns {Promise<Array<object>>} Array de alertas con datos del mineral.
+   */
   async obtenerAlertasUsuario(id_user) {
     const alertas = await PriceAlert.findAll({
       where: {
@@ -45,6 +63,14 @@ class AlertService {
     return alertas;
   }
 
+  /**
+   * Alterna el campo `is_active` de una alerta entre 0 y 1.
+   * Verifica que la alerta pertenezca al usuario para evitar escalada de privilegios.
+   * @param {number} id_alert - ID de la alerta.
+   * @param {number} id_user - ID del usuario propietario.
+   * @returns {Promise<object>} Alerta actualizada.
+   * @throws {Error} Si la alerta no existe o no pertenece al usuario.
+   */
   async toggleAlerta(id_alert, id_user) {
     // Buscamos la alerta asegurándonos de que pertenezca al usuario
     const alerta = await PriceAlert.findOne({
@@ -62,7 +88,13 @@ class AlertService {
     return alerta;
   }
 
-  // Nueva función para que el usuario borre manualmente
+  /**
+   * Elimina permanentemente una alerta de la base de datos.
+   * @param {number} id_alert - ID de la alerta a eliminar.
+   * @param {number} id_user - ID del usuario propietario (verificación de pertenencia).
+   * @returns {Promise<true>}
+   * @throws {Error} Si la alerta no se encuentra.
+   */
   async eliminarAlerta(id_alert, id_user) {
     const alerta = await PriceAlert.findOne({ where: { id_alert, id_user } });
     if (!alerta) throw new Error("Alerta no encontrada");

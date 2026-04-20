@@ -1,8 +1,23 @@
+/**
+ * @fileoverview Controlador del catálogo de productos físicos de metales preciosos.
+ * Delega en {@link module:services/productService}.
+ * @module controllers/productController
+ */
+
 // controllers/productController.js
 const productService = require('../services/productService');
 
+/**
+ * Controlador HTTP para el catálogo de productos (monedas, lingotes, barras, rounds).
+ */
 class ProductController {
-  // GET /api/productos?type=coin&mineral=oro&exclusive=true
+  /**
+   * Devuelve el catálogo completo de productos con filtros opcionales.
+   * @route GET /api/productos?type=coin&mineral=oro&exclusive=true
+   * @param {Express.Request}  req - Query: `type` (coin|ingot|bar|round), `mineral` (nombre parcial), `exclusive` (boolean).
+   * @param {Express.Response} res - 200 con array de productos, o 500 en error.
+   * @returns {Promise<void>}
+   */
   async getAll(req, res) {
     try {
       const { type, mineral, exclusive } = req.query;
@@ -22,7 +37,14 @@ class ProductController {
     }
   }
 
-  // GET /api/productos/:id
+  /**
+   * Devuelve el detalle de un producto por su ID incluyendo el precio de venta calculado
+   * a partir del precio spot actual del mineral subyacente.
+   * @route GET /api/productos/:id
+   * @param {Express.Request}  req - Params: `id` (id_product).
+   * @param {Express.Response} res - 200 con el producto y `precio_actual`, 404 si no existe, 500 en error.
+   * @returns {Promise<void>}
+   */
   async getById(req, res) {
     try {
       const { id } = req.params;

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: controllers/treasuryController.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: controllers/treasuryController.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @fileoverview Controlador de tesorería: compra, venta y consulta del portfolio de minerales
+ * del usuario autenticado. Delega en {@link module:services/treasuryService}.
+ * @module controllers/treasuryController
+ */
+
+// controllers/treasuryController.js
+const treasuryService = require('../services/treasuryService');
+
+/**
+ * Controlador HTTP para la gestión del portfolio (tesorería) de cada usuario.
+ */
+class TreasuryController {
+
+  /**
+   * Compra gramos de un mineral al precio spot actual y los añade a la tesorería del usuario.
+   * Deduce el coste del balance del usuario.
+   * @route POST /api/tesoreria
+   * @param {Express.Request}  req - Body: `{ mineral, cantidad }`. Requiere token.
+   * @param {Express.Response} res - 201 con el ítem creado y nuevo balance, o 400 en error.
+   * @returns {Promise&lt;void>}
+   */
+  async agregar(req, res) {
+    try {
+      // El ID del usuario lo sacamos de forma segura del Token
+      const idUsuario = req.usuario.id_user; 
+      // El mineral y la cantidad nos la envía el usuario en el body
+      const { mineral, cantidad } = req.body;
+
+      if (!mineral || !cantidad || cantidad &lt;= 0) {
+        return res.status(400).json({ ok: false, mensaje: 'Debes indicar un mineral válido y una cantidad mayor que 0.' });
+      }
+
+      const resultado = await treasuryService.agregarMineral(idUsuario, mineral, cantidad);
+
+      res.status(201).json({
+        ok: true,
+        mensaje: `Has añadido ${cantidad}g de ${mineral} a tu tesorería correctamente.`,
+        datos: resultado
+      });
+
+    } catch (error) {
+      console.error("Error al añadir a la tesorería:", error.message);
+      res.status(400).json({ ok: false, mensaje: error.message });
+    }
+  }
+
+  /**
+   * Devuelve todos los ítems del portfolio del usuario con precios actuales y P&amp;L calculado.
+   * @route GET /api/tesoreria
+   * @param {Express.Request}  req - Requiere token válido.
+   * @param {Express.Response} res - 200 con items y resumen financiero, o 500 en error.
+   * @returns {Promise&lt;void>}
+   */
+  async obtenerTesoreria(req, res) {
+    try {
+      // El Token nos dice quién es el usuario
+      const idUsuario = req.usuario.id_user; 
+      
+      const datosTesoreria = await treasuryService.obtenerTesoreria(idUsuario);
+
+      res.status(200).json({
+        ok: true,
+        mensaje: "Tesorería recuperada con éxito",
+        datos: datosTesoreria
+      });
+
+    } catch (error) {
+      console.error("Error al obtener la tesorería:", error.message);
+      res.status(500).json({ ok: false, mensaje: "Error interno al cargar tu tesorería." });
+    }
+  }
+  /**
+   * Vende gramos de un ítem de la tesorería al precio spot actual e ingresa el importe en el balance.
+   * @route POST /api/tesoreria/vender
+   * @param {Express.Request}  req - Body: `{ id_item, cantidad }`. Requiere token.
+   * @param {Express.Response} res - 200 con mensaje de éxito y nuevo balance, o 400 en error.
+   * @returns {Promise&lt;void>}
+   */
+  async vender(req, res) {
+    try {
+      // 1. Sacamos el ID del usuario de forma 100% segura desde el Token
+      const id_user = req.usuario.id_user;
+      
+      // 2. Sacamos qué quiere vender y cuántos gramos desde el body
+      const { id_item, cantidad } = req.body;
+
+      // Validación básica
+      if (!id_item || !cantidad || cantidad &lt;= 0) {
+        return res.status(400).json({ 
+          ok: false, 
+          mensaje: "Debes indicar el id_item y una cantidad válida mayor que 0." 
+        });
+      }
+
+      // 3. Llamamos al servicio (al bróker)
+      const resultado = await treasuryService.venderMineral(id_user, id_item, cantidad);
+
+      // 4. Respondemos con éxito
+      res.status(200).json({
+        ok: true,
+        mensaje: resultado.mensaje,
+        nuevo_balance: resultado.nuevo_balance
+      });
+
+    } catch (error) {
+      console.error("Error al vender mineral:", error.message);
+      res.status(400).json({ ok: false, mensaje: error.message });
+    }
+  }
+
+}
+
+module.exports = new TreasuryController();</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-controllers_alertController.html">controllers/alertController</a></li><li><a href="module-controllers_mineralController.html">controllers/mineralController</a></li><li><a href="module-controllers_productController.html">controllers/productController</a></li><li><a href="module-controllers_treasuryController.html">controllers/treasuryController</a></li><li><a href="module-controllers_userController.html">controllers/userController</a></li><li><a href="module-middlewares_authMiddleware.html">middlewares/authMiddleware</a></li><li><a href="module-routes_alertRoutes.html">routes/alertRoutes</a></li><li><a href="module-routes_mineralRoutes.html">routes/mineralRoutes</a></li><li><a href="module-routes_productRoutes.html">routes/productRoutes</a></li><li><a href="module-routes_treasuryRoutes.html">routes/treasuryRoutes</a></li><li><a href="module-routes_userRoutes.html">routes/userRoutes</a></li><li><a href="module-services_alertService.html">services/alertService</a></li><li><a href="module-services_mineralService.html">services/mineralService</a></li><li><a href="module-services_productService.html">services/productService</a></li><li><a href="module-services_treasuryService.html">services/treasuryService</a></li><li><a href="module-services_userService.html">services/userService</a></li><li><a href="module-services_vigilanteService.html">services/vigilanteService</a></li><li><a href="module-utils_logger.html">utils/logger</a></li></ul><h3>Classes</h3><ul><li><a href="module-controllers_alertController-AlertController.html">AlertController</a></li><li><a href="module-controllers_mineralController-MineralController.html">MineralController</a></li><li><a href="module-controllers_productController-ProductController.html">ProductController</a></li><li><a href="module-controllers_treasuryController-TreasuryController.html">TreasuryController</a></li><li><a href="module-controllers_userController-UserController.html">UserController</a></li><li><a href="module-services_alertService-AlertService.html">AlertService</a></li><li><a href="module-services_mineralService-MineralService.html">MineralService</a></li><li><a href="module-services_productService-ProductService.html">ProductService</a></li><li><a href="module-services_treasuryService-TreasuryService.html">TreasuryService</a></li><li><a href="module-services_userService-UserService.html">UserService</a></li><li><a href="module-services_vigilanteService-VigilanteService.html">VigilanteService</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Mon Apr 20 2026 10:19:29 GMT+0200 (hora de verano de Europa central)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

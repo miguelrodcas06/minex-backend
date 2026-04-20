@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Servicio de usuarios: registro, autenticación JWT, consulta, actualización,
+ * baja lógica y reactivación de cuentas. Accede directamente al modelo Sequelize `users`.
+ * @module services/userService
+ */
+
 // services/userService.js
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -14,7 +20,17 @@ const models = initModels(sequelize);
 // Recuperar el modelo user (tu tabla en la base de datos se llama 'users')
 const User = models.users;
 
+/**
+ * Capa de negocio para todas las operaciones sobre usuarios de MineX.
+ */
 class UserService {
+  /**
+   * Crea un nuevo usuario hasheando su contraseña con bcrypt (salt 10).
+   * Lanza error si el email ya existe en la base de datos.
+   * @param {{ username: string, email: string, password: string }} datos - Datos del nuevo usuario.
+   * @returns {Promise<{ id_user: number, username: string, email: string }>} Datos públicos del usuario creado.
+   * @throws {Error} Si el email ya está registrado.
+   */
   async crearUsuario(datos) {
     const { username, email, password } = datos;
 
@@ -43,6 +59,14 @@ class UserService {
       email: nuevoUsuario.email,
     };
   }
+  /**
+   * Valida las credenciales y genera un JWT con expiración de 24 h.
+   * Bloquea el acceso si la cuenta está inactiva.
+   * @param {string} email - Email del usuario.
+   * @param {string} password - Contraseña en texto plano.
+   * @returns {Promise<{ usuario: object, token: string }>} Datos del usuario y JWT firmado.
+   * @throws {Error} Si las credenciales son inválidas o la cuenta está desactivada.
+   */
   async loginUsuario(email, password) {
     // 1. Buscamos el email
     const usuario = await User.findOne({ where: { email } });
@@ -81,6 +105,10 @@ class UserService {
       token: token, 
     };
   }
+  /**
+   * Devuelve todos los usuarios registrados omitiendo el campo `password_hash`.
+   * @returns {Promise<Array<object>>} Array de usuarios con id, username, email, is_active y created_at.
+   */
   async obtenerTodosLosUsuarios() {
     // Usamos 'attributes' para decirle a Sequelize exactamente qué columnas queremos.
     // Así evitamos enviar los hashes de las contraseñas por error.
@@ -90,6 +118,14 @@ class UserService {
 
     return usuarios;
   }
+  /**
+   * Actualiza el username y/o email de un usuario.
+   * Los campos no proporcionados se conservan con su valor actual.
+   * @param {number} id_user - ID del usuario a actualizar.
+   * @param {Object} datosActualizar - Nuevos valores.
+   * @returns {Promise<{ id_user: number, username: string, email: string }>} Datos actualizados.
+   * @throws {Error} Si el usuario no existe.
+   */
   async actualizarUsuario(id_user, datosActualizar) {
     // 1. Buscamos el usuario por su Primary Key (ID)
     const usuario = await User.findByPk(id_user);
@@ -112,6 +148,13 @@ class UserService {
     };
   }
 
+  /**
+   * Realiza la baja lógica de un usuario estableciendo `is_active = false`.
+   * No elimina el registro de la base de datos.
+   * @param {number} id_user - ID del usuario a desactivar.
+   * @returns {Promise<true>}
+   * @throws {Error} Si el usuario no existe.
+   */
   async inactivarUsuario(id_user) {
     // 1. Buscamos al usuario por su ID
     const usuario = await User.findByPk(id_user);
@@ -129,6 +172,14 @@ class UserService {
     return true;
   }
 
+  /**
+   * Reactiva una cuenta inactiva tras verificar las credenciales del usuario.
+   * Lanza error si la cuenta ya estaba activa para evitar trabajo redundante.
+   * @param {string} email - Email de la cuenta a reactivar.
+   * @param {string} password - Contraseña en texto plano para verificación.
+   * @returns {Promise<true>}
+   * @throws {Error} Si las credenciales son incorrectas o la cuenta ya está activa.
+   */
   async reactivarUsuario(email, password) {
     // 1. Buscamos al usuario por su email
     const usuario = await User.findOne({ where: { email: email } });
@@ -154,6 +205,12 @@ class UserService {
 
     return true;
   }
+  /**
+   * Consulta únicamente el campo `balance` de un usuario.
+   * @param {number} id_user - ID del usuario.
+   * @returns {Promise<number>} Saldo disponible en USD.
+   * @throws {Error} Si el usuario no existe.
+   */
   async obtenerSaldo(id_user) {
     const usuario = await User.findByPk(id_user, { attributes: ["balance"] });
     if (!usuario) {

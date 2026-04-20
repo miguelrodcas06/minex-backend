@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Servicio de tesorería: compra y venta de minerales con precios en tiempo real,
+ * consulta del portfolio con P&L calculado y gestión del balance del usuario.
+ * @module services/treasuryService
+ */
+
 // services/treasuryService.js
 const mineralService = require("./mineralService");
 
@@ -10,7 +16,20 @@ const TreasuryItem = models.treasuryItems;
 const Mineral = models.minerals;
 const User = models.users;
 
+/**
+ * Servicio de negocio para la gestión del portfolio de minerales de cada usuario.
+ */
 class TreasuryService {
+  /**
+   * Compra `cantidad` gramos de un mineral al precio spot actual.
+   * Crea la tesorería del usuario si no existe, verifica su saldo y registra
+   * el ítem con el precio de compra como referencia histórica.
+   * @param {number} id_user - ID del usuario comprador.
+   * @param {string} nombreMineral - Nombre del mineral (ej. "oro").
+   * @param {number} cantidad - Gramos a comprar (> 0).
+   * @returns {Promise<{ mensaje: string, item: object, detallesCotizacion: object, nuevo_balance: number }>}
+   * @throws {Error} Si el mineral no existe, no se puede cotizar o el saldo es insuficiente.
+   */
   async agregarMineral(id_user, nombreMineral, cantidad) {
     // 1. Buscamos el mineral en la base de datos (ej: "oro")
     const mineralDB = await Mineral.findOne({ where: { name: nombreMineral } });
@@ -58,6 +77,13 @@ class TreasuryService {
     };
   }
 
+  /**
+   * Devuelve el portfolio completo del usuario con precios actuales y cálculo de P&L por ítem.
+   * Consulta Yahoo Finance en tiempo real para cada mineral en cartera.
+   * Si el usuario no tiene tesorería, devuelve un objeto vacío con resumen a 0.
+   * @param {number} id_user - ID del usuario.
+   * @returns {Promise<{ items: Array<object>, resumen: { total_invertido: string, valor_actual_total: string, balance_total: string } }>}
+   */
   async obtenerTesoreria(id_user) {
     // 1. Buscamos la tesorería del usuario
     const tesoreria = await Treasury.findOne({ where: { id_user: id_user } });
@@ -134,6 +160,16 @@ class TreasuryService {
       },
     };
   }
+  /**
+   * Vende `cantidad_vender` gramos de un ítem de la tesorería al precio spot actual.
+   * Ingresa el importe en el balance del usuario y elimina (o reduce) el ítem.
+   * @param {number} id_user - ID del usuario vendedor.
+   * @param {number} id_item - ID del ítem de tesorería a vender.
+   * @param {number} cantidad_vender - Gramos a vender (≤ stock disponible).
+   * @returns {Promise<{ mensaje: string, nuevo_balance: number }>}
+   * @throws {Error} Si la tesorería no existe, el ítem no pertenece al usuario,
+   *                 la cantidad supera el stock o no se puede cotizar el mineral.
+   */
   async venderMineral(id_user, id_item, cantidad_vender) {
     const tesoreria = await Treasury.findOne({ where: { id_user: id_user } });
     if (!tesoreria) {

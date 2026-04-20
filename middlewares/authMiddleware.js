@@ -1,3 +1,10 @@
+/**
+ * @fileoverview Middleware de autenticación JWT para rutas protegidas de MineX.
+ * Verifica la firma del token, comprueba que el usuario exista en BD y que su
+ * cuenta esté activa antes de dejar pasar la petición.
+ * @module middlewares/authMiddleware
+ */
+
 // middlewares/authMiddleware.js
 const jwt = require("jsonwebtoken");
 // Recuperar función de inicialización de modelos
@@ -9,6 +16,19 @@ const models = initModels(sequelize);
 // Recuperar el modelo user (tu tabla en la base de datos se llama 'users')
 const User = models.users;
 
+/**
+ * Middleware Express que protege las rutas con autenticación JWT.
+ * Extrae el token del header `Authorization: Bearer <token>`, lo verifica
+ * criptográficamente y consulta la base de datos para confirmar que el usuario
+ * sigue activo. Si pasa todos los controles, adjunta el payload decodificado
+ * en `req.usuario` y llama a `next()`.
+ *
+ * @function verificarToken
+ * @param {Express.Request}  req  - Petición Express. Debe incluir header Authorization.
+ * @param {Express.Response} res  - Respuesta Express.
+ * @param {Express.NextFunction} next - Siguiente middleware de la cadena.
+ * @returns {Promise<void>}
+ */
 const verificarToken = async (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;

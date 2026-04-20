@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Module: middlewares/authMiddleware</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Module: middlewares/authMiddleware</h1>
+
+    
+
+
+
+
+<section>
+
+<header>
+    
+        
+            
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+            <div class="description">Middleware de autenticación JWT para rutas protegidas de MineX.
+Verifica la firma del token, comprueba que el usuario exista en BD y que su
+cuenta esté activa antes de dejar pasar la petición.</div>
+        
+
+        
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="middlewares_authMiddleware.js.html">middlewares/authMiddleware.js</a>, <a href="middlewares_authMiddleware.js.html#line1">line 1</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="~verificarToken"><span class="type-signature">(inner) </span>verificarToken<span class="signature">(req, res, next)</span><span class="type-signature"> &rarr; {Promise.&lt;void>}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Middleware Express que protege las rutas con autenticación JWT.
+Extrae el token del header `Authorization: Bearer <token>`, lo verifica
+criptográficamente y consulta la base de datos para confirmar que el usuario
+sigue activo. Si pasa todos los controles, adjunta el payload decodificado
+en `req.usuario` y llama a `next()`.
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>req</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Express.Request</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Petición Express. Debe incluir header Authorization.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>res</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Express.Response</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Respuesta Express.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>next</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Express.NextFunction</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Siguiente middleware de la cadena.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="middlewares_authMiddleware.js.html">middlewares/authMiddleware.js</a>, <a href="middlewares_authMiddleware.js.html#line19">line 19</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;void></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-controllers_alertController.html">controllers/alertController</a></li><li><a href="module-controllers_mineralController.html">controllers/mineralController</a></li><li><a href="module-controllers_productController.html">controllers/productController</a></li><li><a href="module-controllers_treasuryController.html">controllers/treasuryController</a></li><li><a href="module-controllers_userController.html">controllers/userController</a></li><li><a href="module-middlewares_authMiddleware.html">middlewares/authMiddleware</a></li><li><a href="module-routes_alertRoutes.html">routes/alertRoutes</a></li><li><a href="module-routes_mineralRoutes.html">routes/mineralRoutes</a></li><li><a href="module-routes_productRoutes.html">routes/productRoutes</a></li><li><a href="module-routes_treasuryRoutes.html">routes/treasuryRoutes</a></li><li><a href="module-routes_userRoutes.html">routes/userRoutes</a></li><li><a href="module-services_alertService.html">services/alertService</a></li><li><a href="module-services_mineralService.html">services/mineralService</a></li><li><a href="module-services_productService.html">services/productService</a></li><li><a href="module-services_treasuryService.html">services/treasuryService</a></li><li><a href="module-services_userService.html">services/userService</a></li><li><a href="module-services_vigilanteService.html">services/vigilanteService</a></li><li><a href="module-utils_logger.html">utils/logger</a></li></ul><h3>Classes</h3><ul><li><a href="module-controllers_alertController-AlertController.html">AlertController</a></li><li><a href="module-controllers_mineralController-MineralController.html">MineralController</a></li><li><a href="module-controllers_productController-ProductController.html">ProductController</a></li><li><a href="module-controllers_treasuryController-TreasuryController.html">TreasuryController</a></li><li><a href="module-controllers_userController-UserController.html">UserController</a></li><li><a href="module-services_alertService-AlertService.html">AlertService</a></li><li><a href="module-services_mineralService-MineralService.html">MineralService</a></li><li><a href="module-services_productService-ProductService.html">ProductService</a></li><li><a href="module-services_treasuryService-TreasuryService.html">TreasuryService</a></li><li><a href="module-services_userService-UserService.html">UserService</a></li><li><a href="module-services_vigilanteService-VigilanteService.html">VigilanteService</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Mon Apr 20 2026 10:19:29 GMT+0200 (hora de verano de Europa central)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

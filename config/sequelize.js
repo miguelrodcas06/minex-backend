@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Inicializa y exporta la instancia de Sequelize conectada a MySQL.
+ * Verifica la conexión al arrancar y registra solo los errores SQL.
+ * @module config/sequelize
+ */
+
 // config/sequelize.js
 const { logMensaje } = require("../utils/logger.js");
 const { Sequelize } = require("sequelize");

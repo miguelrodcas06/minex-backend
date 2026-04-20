@@ -1,8 +1,25 @@
+/**
+ * @fileoverview Servicio de minerales: cotización en tiempo real, histórico de precios
+ * y noticias desde Yahoo Finance. Convierte precios de onzas troy / libras a gramos.
+ * @module services/mineralService
+ */
+
 // services/mineralService.js
 const YahooFinance = require("yahoo-finance2").default;
 const yahooFinance = new YahooFinance();
 
+/**
+ * Servicio que encapsula todas las consultas de datos de metales preciosos a Yahoo Finance.
+ */
 class MineralService {
+  /**
+   * Obtiene el precio spot actual de un mineral en USD/g y opcionalmente lo convierte
+   * a otra divisa usando el tipo de cambio de Yahoo Finance.
+   * @param {string} mineralName - Nombre del mineral (oro | plata | platino | paladio | cobre).
+   * @param {string} [targetCurrency="USD"] - Código ISO 4217 de la divisa destino.
+   * @returns {Promise<{mineral: string, simbolo: string, precio: number, moneda: string, unidad: string, fecha_actualizacion: Date} | null>}
+   *   Datos de cotización o `null` si el mineral no está soportado.
+   */
   async getCotizacion(mineralName, targetCurrency = "USD") {
     const diccionarioMinerales = {
       oro: "GC=F",
@@ -52,10 +69,15 @@ class MineralService {
       fecha_actualizacion: new Date(cotizacion.regularMarketTime),
     };
   }
-  // services/mineralService.js (dentro de tu clase MineralService)
-
-  // services/mineralService.js (dentro de tu clase MineralService)
-
+  /**
+   * Devuelve el histórico de precios de un mineral para el período seleccionado.
+   * Intervalos: 30 d → diario; 12 m / 5 y → mensual (para no saturar la gráfica).
+   * Incluye también el precio actual en tiempo real como `precioActual`.
+   * @param {string} mineralName - Nombre del mineral.
+   * @param {"30d"|"12m"|"5y"} [periodo="12m"] - Período de tiempo deseado.
+   * @returns {Promise<{mineral: string, periodoSeleccionado: string, precioActual: number|null, unidad: string, historico: Array<{fecha: string, precio: number}>} | null>}
+   *   Datos históricos o `null` si el mineral/período no es válido.
+   */
   async getHistorico(mineralName, periodo = "12m") {
     const diccionarioMinerales = {
       oro: "GC=F",
@@ -132,6 +154,12 @@ class MineralService {
     }
   }
 
+  /**
+   * Recupera hasta 6 noticias del mercado de metales desde Yahoo Finance Search.
+   * @param {string} [busqueda="gold market"] - Término de búsqueda para las noticias.
+   * @returns {Promise<Array<{id: string, titulo: string, enlace: string, fuente: string, fecha: string, imagen: string|null}> | null>}
+   *   Array de noticias formateadas, array vacío si no hay resultados, o `null` si hay error.
+   */
   async getNoticias(busqueda = "gold market") {
     try {
       // Le añadimos quotesCount: 0 para que ignore las cotizaciones conflictivas

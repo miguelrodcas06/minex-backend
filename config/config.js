@@ -1,6 +1,13 @@
+/**
+ * @fileoverview Carga y exporta la configuración de la aplicación MineX a partir de
+ * variables de entorno. Soporta tanto el entorno Docker (DBHOST, DBUSER…) como
+ * el entorno local (DB_HOST, DB_USER…).
+ * @module config/config
+ */
+
 const { logMensaje } = require("../utils/logger.js");
 
-// Intentamos cargar dotenv para desarrollo local. 
+// Intentamos cargar dotenv para desarrollo local.
 // En Docker no es necesario porque las variables vienen del sistema, 
 // así que si falla (try/catch), no rompe la app.
 try {

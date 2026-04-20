@@ -1,3 +1,16 @@
+/**
+ * @fileoverview Rutas de la API para la gestión de la tesorería (portfolio) del usuario.
+ * Todas las rutas requieren JWT.
+ *
+ * | Método | Ruta                   | Auth | Descripción                            |
+ * |--------|------------------------|------|----------------------------------------|
+ * | POST   | /api/tesoreria         | JWT  | Comprar gramos de un mineral           |
+ * | POST   | /api/tesoreria/vender  | JWT  | Vender gramos de un ítem               |
+ * | GET    | /api/tesoreria         | JWT  | Ver portfolio con P&L en tiempo real   |
+ *
+ * @module routes/treasuryRoutes
+ */
+
 // routes/treasuryRoutes.js
 const express = require('express');
 const router = express.Router();

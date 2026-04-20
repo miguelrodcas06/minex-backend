@@ -1,7 +1,14 @@
+/**
+ * @fileoverview Punto de entrada de la aplicación MineX.
+ * Configura Express, registra middlewares, monta las rutas de la API REST,
+ * arranca el servicio vigilante (cron de alertas) y levanta el servidor HTTP.
+ * @module index
+ */
+
 // ============================================
 // IMPORTACIONES
 // ============================================
-require("dotenv").config(); 
+require("dotenv").config();
 const express = require("express");
 const path = require("path");
 const cors = require("cors");

@@ -1,3 +1,20 @@
+/**
+ * @fileoverview Rutas de la API para la gestión de usuarios de MineX.
+ *
+ * | Método | Ruta                       | Auth | Descripción                          |
+ * |--------|----------------------------|------|--------------------------------------|
+ * | POST   | /api/usuarios              | No   | Registro de nuevo usuario            |
+ * | POST   | /api/usuarios/login        | No   | Login y obtención de JWT             |
+ * | GET    | /api/usuarios/perfil       | JWT  | Datos del usuario autenticado        |
+ * | GET    | /api/usuarios              | JWT  | Listado de todos los usuarios        |
+ * | GET    | /api/usuarios/saldo        | JWT  | Saldo disponible del usuario         |
+ * | PUT    | /api/usuarios/perfil       | JWT  | Actualizar username / email          |
+ * | PUT    | /api/usuarios/baja         | JWT  | Baja lógica de la cuenta             |
+ * | PUT    | /api/usuarios/reactivar    | No   | Reactivar cuenta con credenciales    |
+ *
+ * @module routes/userRoutes
+ */
+
 const express = require("express");
 const router = express.Router();
 const userController = require("../controllers/userController");

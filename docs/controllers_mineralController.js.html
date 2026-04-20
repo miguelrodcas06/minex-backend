@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: controllers/mineralController.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: controllers/mineralController.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @fileoverview Controlador de minerales: cotización en tiempo real, histórico de precios
+ * y noticias del mercado. Delega en {@link module:services/mineralService}.
+ * @module controllers/mineralController
+ */
+
+// controllers/mineralController.js
+const { logMensaje } = require("../utils/logger.js");
+const mineralService = require("../services/mineralService");
+
+/**
+ * Controlador HTTP para consultas de minerales preciosos.
+ */
+class MineralController {
+  /**
+   * Devuelve el precio spot actual de un mineral en USD/g (o en la moneda solicitada).
+   * @route GET /api/minerales/:nombre?moneda=EUR
+   * @param {Express.Request}  req - Params: `nombre` (oro|plata|platino|paladio|cobre). Query: `moneda` (ISO 4217, opcional).
+   * @param {Express.Response} res - 200 con datos de cotización, 404 si el mineral no existe, 500 en error.
+   * @returns {Promise&lt;void>}
+   */
+  async getCotizacion(req, res) {
+    try {
+      const { nombre } = req.params;
+      // Atrapamos la moneda de la URL (si no viene, por defecto será undefined)
+      const { moneda } = req.query;
+
+      // Le pasamos la moneda al servicio
+      const datos = await mineralService.getCotizacion(nombre, moneda);
+
+      if (!datos) {
+        return res.status(404).json({
+          ok: false,
+          mensaje: `Mineral '${nombre}' no soportado`,
+        });
+      }
+
+      res.json({
+        ok: true,
+        datos,
+        mensaje: `Cotización del mineral ${nombre} recuperada correctamente`,
+      });
+    } catch (error) {
+      console.error("Error en getCotizacion:", error);
+      res.status(500).json({
+        ok: false,
+        mensaje: "Error interno del servidor al obtener la cotización",
+      });
+    }
+  }
+  /**
+   * Devuelve el histórico de precios de un mineral para el período indicado.
+   * @route GET /api/minerales/:nombre/historico?periodo=12m
+   * @param {Express.Request}  req - Params: `nombre`. Query: `periodo` (30d | 12m | 5y).
+   * @param {Express.Response} res - 200 con array de precios por fecha, 400 si el período no es válido, 500 en error.
+   * @returns {Promise&lt;void>}
+   */
+  async getHistorico(req, res) {
+    try {
+      // Pillamos el nombre del mineral de la URL (ej: /api/minerales/Oro/historico)
+      const { nombre } = req.params;
+      // Pillamos el periodo de los query params (ej: ?periodo=12m)
+      const { periodo } = req.query;
+
+      // Delegamos la creación de los datos al servicio
+      const datos = await mineralService.getHistorico(nombre, periodo);
+
+      if (!datos) {
+        return res.status(400).json({
+          ok: false,
+          mensaje: `No se pudo generar el histórico para '${nombre}' con el periodo '${periodo}'`,
+        });
+      }
+
+      res.json({
+        ok: true,
+        datos,
+        mensaje: `Histórico del mineral ${nombre} recuperado correctamente`,
+      });
+    } catch (error) {
+      console.error("Error en getHistorico:", error);
+      res.status(500).json({
+        ok: false,
+        mensaje: "Error interno del servidor al obtener el histórico",
+      });
+    }
+  }
+  /**
+   * Recupera noticias del mercado de metales preciosos desde Yahoo Finance.
+   * @route GET /api/minerales/noticias?tema=gold+market
+   * @param {Express.Request}  req - Query: `tema` (término de búsqueda, por defecto "gold market").
+   * @param {Express.Response} res - 200 con array de noticias formateadas, o 500 en error.
+   * @returns {Promise&lt;void>}
+   */
+  async getNoticias(req, res) {
+    try {
+      // Atrapamos el tema de búsqueda (por si desde React queremos buscar otra cosa)
+      const { tema } = req.query;
+      const busqueda = tema || "gold market"; // 'gold market' por defecto
+
+      const noticias = await mineralService.getNoticias(busqueda);
+
+      if (!noticias) {
+        return res.status(500).json({
+          ok: false,
+          mensaje: "No se pudieron obtener las noticias en este momento.",
+        });
+      }
+
+      res.json({
+        ok: true,
+        datos: noticias,
+        mensaje: "Noticias recuperadas correctamente",
+      });
+    } catch (error) {
+      console.error("Error en getNoticias:", error);
+      res.status(500).json({
+        ok: false,
+        mensaje: "Error interno del servidor al obtener las noticias",
+      });
+    }
+  }
+}
+
+module.exports = new MineralController();
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-controllers_alertController.html">controllers/alertController</a></li><li><a href="module-controllers_mineralController.html">controllers/mineralController</a></li><li><a href="module-controllers_productController.html">controllers/productController</a></li><li><a href="module-controllers_treasuryController.html">controllers/treasuryController</a></li><li><a href="module-controllers_userController.html">controllers/userController</a></li><li><a href="module-middlewares_authMiddleware.html">middlewares/authMiddleware</a></li><li><a href="module-routes_alertRoutes.html">routes/alertRoutes</a></li><li><a href="module-routes_mineralRoutes.html">routes/mineralRoutes</a></li><li><a href="module-routes_productRoutes.html">routes/productRoutes</a></li><li><a href="module-routes_treasuryRoutes.html">routes/treasuryRoutes</a></li><li><a href="module-routes_userRoutes.html">routes/userRoutes</a></li><li><a href="module-services_alertService.html">services/alertService</a></li><li><a href="module-services_mineralService.html">services/mineralService</a></li><li><a href="module-services_productService.html">services/productService</a></li><li><a href="module-services_treasuryService.html">services/treasuryService</a></li><li><a href="module-services_userService.html">services/userService</a></li><li><a href="module-services_vigilanteService.html">services/vigilanteService</a></li><li><a href="module-utils_logger.html">utils/logger</a></li></ul><h3>Classes</h3><ul><li><a href="module-controllers_alertController-AlertController.html">AlertController</a></li><li><a href="module-controllers_mineralController-MineralController.html">MineralController</a></li><li><a href="module-controllers_productController-ProductController.html">ProductController</a></li><li><a href="module-controllers_treasuryController-TreasuryController.html">TreasuryController</a></li><li><a href="module-controllers_userController-UserController.html">UserController</a></li><li><a href="module-services_alertService-AlertService.html">AlertService</a></li><li><a href="module-services_mineralService-MineralService.html">MineralService</a></li><li><a href="module-services_productService-ProductService.html">ProductService</a></li><li><a href="module-services_treasuryService-TreasuryService.html">TreasuryService</a></li><li><a href="module-services_userService-UserService.html">UserService</a></li><li><a href="module-services_vigilanteService-VigilanteService.html">VigilanteService</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Mon Apr 20 2026 10:19:29 GMT+0200 (hora de verano de Europa central)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

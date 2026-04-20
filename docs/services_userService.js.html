@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: services/userService.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: services/userService.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @fileoverview Servicio de usuarios: registro, autenticación JWT, consulta, actualización,
+ * baja lógica y reactivación de cuentas. Accede directamente al modelo Sequelize `users`.
+ * @module services/userService
+ */
+
+// services/userService.js
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+
+// solo alguien que tenga un Token válido (que haya hecho login)
+// podrá ver la lista de usuarios.
+
+// Recuperar función de inicialización de modelos
+const initModels = require("../models/init-models.js").initModels;
+// Crear la instancia de sequelize con la conexión a la base de datos
+const sequelize = require("../config/sequelize.js");
+// Cargar las definiciones del modelo en sequelize
+const models = initModels(sequelize);
+// Recuperar el modelo user (tu tabla en la base de datos se llama 'users')
+const User = models.users;
+
+/**
+ * Capa de negocio para todas las operaciones sobre usuarios de MineX.
+ */
+class UserService {
+  /**
+   * Crea un nuevo usuario hasheando su contraseña con bcrypt (salt 10).
+   * Lanza error si el email ya existe en la base de datos.
+   * @param {{ username: string, email: string, password: string }} datos - Datos del nuevo usuario.
+   * @returns {Promise&lt;{ id_user: number, username: string, email: string }>} Datos públicos del usuario creado.
+   * @throws {Error} Si el email ya está registrado.
+   */
+  async crearUsuario(datos) {
+    const { username, email, password } = datos;
+
+    // 1. Comprobamos si el correo ya existe en la base de datos
+    const usuarioExistente = await User.findOne({ where: { email } });
+    if (usuarioExistente) {
+      throw new Error("El email ya está registrado en MineX");
+    }
+
+    // 2. Encriptamos la contraseña para que sea segura
+    const salt = await bcrypt.genSalt(10);
+    const passwordEncriptada = await bcrypt.hash(password, salt);
+
+    // 3. Creamos el usuario
+    // Nota: 'is_active' y 'created_at' se generan automáticamente por MySQL
+    const nuevoUsuario = await User.create({
+      username: username,
+      email: email,
+      password_hash: passwordEncriptada, // Tu columna de la BD
+    });
+
+    // 4. Devolvemos los datos limpios y seguros al cliente
+    return {
+      id_user: nuevoUsuario.id_user,
+      username: nuevoUsuario.username,
+      email: nuevoUsuario.email,
+    };
+  }
+  /**
+   * Valida las credenciales y genera un JWT con expiración de 24 h.
+   * Bloquea el acceso si la cuenta está inactiva.
+   * @param {string} email - Email del usuario.
+   * @param {string} password - Contraseña en texto plano.
+   * @returns {Promise&lt;{ usuario: object, token: string }>} Datos del usuario y JWT firmado.
+   * @throws {Error} Si las credenciales son inválidas o la cuenta está desactivada.
+   */
+  async loginUsuario(email, password) {
+    // 1. Buscamos el email
+    const usuario = await User.findOne({ where: { email } });
+    if (!usuario) {
+      throw new Error("Credenciales inválidas");
+    }
+
+    // 2. Comprobamos la contraseña
+    const passwordCorrecta = await bcrypt.compare(password, usuario.password_hash);
+    if (!passwordCorrecta) {
+      throw new Error("Credenciales inválidas");
+    }
+
+    // 🛑 3. ¡EL FRENO DE SEGURIDAD PARA INACTIVOS! 🛑
+    if (usuario.is_active === false || usuario.is_active === 0) {
+      throw new Error("Tu cuenta está desactivada. Usa la ruta de reactivación para volver a entrar.");
+    }
+
+    // 4. Fabricamos el Token (solo si pasó el freno de arriba)
+    const token = jwt.sign(
+      {
+        id_user: usuario.id_user,
+        email: usuario.email,
+      },
+      process.env.JWT_SECRET, // Usamos la firma de tu .env
+      { expiresIn: "24h" }, // El token caducará en 24 horas
+    );
+
+    // 5. Devolvemos los datos del usuario Y el token
+    return {
+      usuario: {
+        id_user: usuario.id_user,
+        username: usuario.username,
+        email: usuario.email,
+      },
+      token: token, 
+    };
+  }
+  /**
+   * Devuelve todos los usuarios registrados omitiendo el campo `password_hash`.
+   * @returns {Promise&lt;Array&lt;object>>} Array de usuarios con id, username, email, is_active y created_at.
+   */
+  async obtenerTodosLosUsuarios() {
+    // Usamos 'attributes' para decirle a Sequelize exactamente qué columnas queremos.
+    // Así evitamos enviar los hashes de las contraseñas por error.
+    const usuarios = await User.findAll({
+      attributes: ["id_user", "username", "email", "is_active", "created_at"],
+    });
+
+    return usuarios;
+  }
+  /**
+   * Actualiza el username y/o email de un usuario.
+   * Los campos no proporcionados se conservan con su valor actual.
+   * @param {number} id_user - ID del usuario a actualizar.
+   * @param {Object} datosActualizar - Nuevos valores.
+   * @returns {Promise&lt;{ id_user: number, username: string, email: string }>} Datos actualizados.
+   * @throws {Error} Si el usuario no existe.
+   */
+  async actualizarUsuario(id_user, datosActualizar) {
+    // 1. Buscamos el usuario por su Primary Key (ID)
+    const usuario = await User.findByPk(id_user);
+    if (!usuario) {
+      throw new Error("Usuario no encontrado");
+    }
+
+    // 2. Actualizamos los datos.
+    // Si no nos envían un dato nuevo, mantenemos el que ya tenía (usuario.username)
+    await usuario.update({
+      username: datosActualizar.username || usuario.username,
+      email: datosActualizar.email || usuario.email,
+    });
+
+    // 3. Devolvemos los datos limpios actualizados
+    return {
+      id_user: usuario.id_user,
+      username: usuario.username,
+      email: usuario.email,
+    };
+  }
+
+  /**
+   * Realiza la baja lógica de un usuario estableciendo `is_active = false`.
+   * No elimina el registro de la base de datos.
+   * @param {number} id_user - ID del usuario a desactivar.
+   * @returns {Promise&lt;true>}
+   * @throws {Error} Si el usuario no existe.
+   */
+  async inactivarUsuario(id_user) {
+    // 1. Buscamos al usuario por su ID
+    const usuario = await User.findByPk(id_user);
+
+    if (!usuario) {
+      throw new Error("Usuario no encontrado.");
+    }
+
+    // 2. Apagamos el booleano. Sequelize traducirá este 'false' a un '0' en tu MySQL.
+    usuario.is_active = false;
+
+    // 3. Guardamos los cambios
+    await usuario.save();
+
+    return true;
+  }
+
+  /**
+   * Reactiva una cuenta inactiva tras verificar las credenciales del usuario.
+   * Lanza error si la cuenta ya estaba activa para evitar trabajo redundante.
+   * @param {string} email - Email de la cuenta a reactivar.
+   * @param {string} password - Contraseña en texto plano para verificación.
+   * @returns {Promise&lt;true>}
+   * @throws {Error} Si las credenciales son incorrectas o la cuenta ya está activa.
+   */
+  async reactivarUsuario(email, password) {
+    // 1. Buscamos al usuario por su email
+    const usuario = await User.findOne({ where: { email: email } });
+    
+    if (!usuario) {
+      throw new Error("Credenciales incorrectas."); // Mensaje genérico por seguridad
+    }
+
+    // 2. Comprobamos si la contraseña coincide con el hash de la base de datos
+    const passwordValida = await bcrypt.compare(password, usuario.password_hash);
+    if (!passwordValida) {
+      throw new Error("Credenciales incorrectas.");
+    }
+
+    // 3. Verificamos si ya estaba activo para no hacer trabajo de más
+    if (usuario.is_active === true || usuario.is_active === 1) {
+      throw new Error("Esta cuenta ya está activa. Por favor, inicia sesión normalmente.");
+    }
+
+    // 4. ¡Magia! Reactivamos la cuenta
+    usuario.is_active = true;
+    await usuario.save();
+
+    return true;
+  }
+  /**
+   * Consulta únicamente el campo `balance` de un usuario.
+   * @param {number} id_user - ID del usuario.
+   * @returns {Promise&lt;number>} Saldo disponible en USD.
+   * @throws {Error} Si el usuario no existe.
+   */
+  async obtenerSaldo(id_user) {
+    const usuario = await User.findByPk(id_user, { attributes: ["balance"] });
+    if (!usuario) {
+        throw new Error("Usuario no encontrado");
+    }
+    return usuario.balance;
+  }
+}
+
+module.exports = new UserService();
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-controllers_alertController.html">controllers/alertController</a></li><li><a href="module-controllers_mineralController.html">controllers/mineralController</a></li><li><a href="module-controllers_productController.html">controllers/productController</a></li><li><a href="module-controllers_treasuryController.html">controllers/treasuryController</a></li><li><a href="module-controllers_userController.html">controllers/userController</a></li><li><a href="module-middlewares_authMiddleware.html">middlewares/authMiddleware</a></li><li><a href="module-routes_alertRoutes.html">routes/alertRoutes</a></li><li><a href="module-routes_mineralRoutes.html">routes/mineralRoutes</a></li><li><a href="module-routes_productRoutes.html">routes/productRoutes</a></li><li><a href="module-routes_treasuryRoutes.html">routes/treasuryRoutes</a></li><li><a href="module-routes_userRoutes.html">routes/userRoutes</a></li><li><a href="module-services_alertService.html">services/alertService</a></li><li><a href="module-services_mineralService.html">services/mineralService</a></li><li><a href="module-services_productService.html">services/productService</a></li><li><a href="module-services_treasuryService.html">services/treasuryService</a></li><li><a href="module-services_userService.html">services/userService</a></li><li><a href="module-services_vigilanteService.html">services/vigilanteService</a></li><li><a href="module-utils_logger.html">utils/logger</a></li></ul><h3>Classes</h3><ul><li><a href="module-controllers_alertController-AlertController.html">AlertController</a></li><li><a href="module-controllers_mineralController-MineralController.html">MineralController</a></li><li><a href="module-controllers_productController-ProductController.html">ProductController</a></li><li><a href="module-controllers_treasuryController-TreasuryController.html">TreasuryController</a></li><li><a href="module-controllers_userController-UserController.html">UserController</a></li><li><a href="module-services_alertService-AlertService.html">AlertService</a></li><li><a href="module-services_mineralService-MineralService.html">MineralService</a></li><li><a href="module-services_productService-ProductService.html">ProductService</a></li><li><a href="module-services_treasuryService-TreasuryService.html">TreasuryService</a></li><li><a href="module-services_userService-UserService.html">UserService</a></li><li><a href="module-services_vigilanteService-VigilanteService.html">VigilanteService</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Mon Apr 20 2026 10:19:29 GMT+0200 (hora de verano de Europa central)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

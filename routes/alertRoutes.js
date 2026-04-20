@@ -1,3 +1,17 @@
+/**
+ * @fileoverview Rutas de la API para la gestión de alertas de precio.
+ * Todas las rutas requieren JWT.
+ *
+ * | Método | Ruta                               | Auth | Descripción                              |
+ * |--------|------------------------------------|------|------------------------------------------|
+ * | POST   | /api/alertas                       | JWT  | Crear nueva alerta                       |
+ * | GET    | /api/alertas                       | JWT  | Ver todas mis alertas (activas/pausadas) |
+ * | PATCH  | /api/alertas/toggle/:id_alert      | JWT  | Activar / pausar una alerta              |
+ * | DELETE | /api/alertas/:id_alert             | JWT  | Eliminar una alerta permanentemente      |
+ *
+ * @module routes/alertRoutes
+ */
+
 const express = require("express");
 const router = express.Router();
 const alertController = require("../controllers/alertController");

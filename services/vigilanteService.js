@@ -1,3 +1,10 @@
+/**
+ * @fileoverview Servicio vigilante: cron job que se ejecuta cada 15 minutos para comprobar
+ * si alguna alerta de precio activa ha sido alcanzada. Al dispararse, registra la notificación
+ * en BD, elimina la alerta y envía un email al usuario via Nodemailer.
+ * @module services/vigilanteService
+ */
+
 // services/vigilanteService.js
 const cron = require("node-cron");
 const nodemailer = require("nodemailer");
@@ -15,7 +22,16 @@ const Mineral = models.minerals;
 const AlertNotification = models.alertNotifications;
 const User = models.users;
 
+/**
+ * Servicio de monitoreo de alertas de precio en segundo plano.
+ * Usa node-cron para revisar periódicamente todas las alertas activas y
+ * Nodemailer para notificar al usuario cuando se cumple una condición.
+ */
 class VigilanteService {
+  /**
+   * Inicializa el transportador de email con las credenciales del entorno.
+   * Las variables `EMAIL_USER` y `EMAIL_PASS` deben estar definidas en `.env`.
+   */
   constructor() {
     // Configuramos el "cartero" de Nodemailer
     this.transporter = nodemailer.createTransport({
@@ -27,7 +43,12 @@ class VigilanteService {
     });
   }
 
-  // Función principal que revisará los precios
+  /**
+   * Revisa todas las alertas activas de usuarios activos contra el precio spot actual.
+   * Por cada alerta cuya condición se cumple: crea un registro en `alert_notifications`,
+   * elimina la alerta y envía un email de notificación al usuario.
+   * @returns {Promise<void>}
+   */
   async revisarAlertas() {
     console.log("🕵️‍♂️ [Vigilante] Revisando alertas de precios...");
 
@@ -95,7 +116,18 @@ class VigilanteService {
     }
   }
 
-  // Función para mandar el email
+  /**
+   * Envía un email HTML al usuario informando de que su alerta ha sido disparada.
+   * Si el envío falla (p.ej. credenciales no configuradas), solo registra un aviso
+   * en consola sin interrumpir el flujo (la BD ya fue actualizada).
+   * @param {string} email - Dirección de correo del destinatario.
+   * @param {string} usuario - Nombre del usuario para personalizar el saludo.
+   * @param {string} mineral - Nombre del mineral que disparó la alerta.
+   * @param {number} precioActual - Precio en USD/g en el momento del disparo.
+   * @param {number} precioObjetivo - Umbral configurado por el usuario.
+   * @param {"above"|"below"} condicion - Condición que se cumplió.
+   * @returns {Promise<void>}
+   */
   async enviarCorreo(email, usuario, mineral, precioActual, precioObjetivo, condicion) {
     const direccion = condicion === "above" ? "superado" : "caído por debajo de";
 
@@ -125,7 +157,12 @@ class VigilanteService {
     }
   }
 
-  // Función para arrancar el cron
+  /**
+   * Registra el cron job con node-cron y arranca el ciclo de vigilancia.
+   * Se ejecuta {@link revisarAlertas} cada 15 minutos.
+   * Debe llamarse una sola vez al arrancar la aplicación (desde `index.js`).
+   * @returns {void}
+   */
   iniciar() {
     // Para PRUEBAS: Lo ponemos a 1 minuto. Luego cámbialo a '*/2 * * * *' o '0 * * * *' (cada hora)
     cron.schedule("*/15 * * * *", () => {

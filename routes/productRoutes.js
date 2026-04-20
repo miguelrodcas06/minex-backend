@@ -1,3 +1,15 @@
+/**
+ * @fileoverview Rutas de la API para el catálogo de productos físicos de metales preciosos.
+ * Rutas públicas, no requieren autenticación.
+ *
+ * | Método | Ruta                   | Auth | Descripción                                      |
+ * |--------|------------------------|------|--------------------------------------------------|
+ * | GET    | /api/productos         | No   | Catálogo con filtros opcionales (type/mineral/exclusive) |
+ * | GET    | /api/productos/:id     | No   | Detalle del producto con precio actual calculado |
+ *
+ * @module routes/productRoutes
+ */
+
 // routes/productRoutes.js
 const express = require('express');
 const router = express.Router();

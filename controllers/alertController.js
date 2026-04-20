@@ -1,7 +1,23 @@
+/**
+ * @fileoverview Controlador de alertas de precio: creación, consulta, toggle y eliminación.
+ * Todas las rutas están protegidas por JWT. Delega en {@link module:services/alertService}.
+ * @module controllers/alertController
+ */
+
 const alertService = require("../services/alertService");
 
+/**
+ * Controlador HTTP para la gestión de alertas de precio del usuario.
+ */
 class AlertController {
-  
+
+  /**
+   * Crea una nueva alerta de precio para el usuario autenticado.
+   * @route POST /api/alertas
+   * @param {Express.Request}  req - Body: `{ id_mineral, threshold_price, condition_type }`. Requiere token.
+   * @param {Express.Response} res - 201 con la alerta creada, o 400/500 en error.
+   * @returns {Promise<void>}
+   */
   async crearAlerta(req, res) {
     try {
       const id_user = req.usuario.id_user; 
@@ -22,6 +38,13 @@ class AlertController {
     }
   }
 
+  /**
+   * Devuelve todas las alertas (activas y pausadas) del usuario autenticado.
+   * @route GET /api/alertas
+   * @param {Express.Request}  req - Requiere token válido.
+   * @param {Express.Response} res - 200 con array de alertas, o 500 en error.
+   * @returns {Promise<void>}
+   */
   async obtenerAlertasUsuario(req, res) {
     try {
       const id_user = req.usuario.id_user;
@@ -32,7 +55,14 @@ class AlertController {
     }
   }
 
-  // Sustituimos desactivarAlerta por este Toggle
+  /**
+   * Alterna el estado activo/pausado de una alerta del usuario autenticado.
+   * Solo el propietario de la alerta puede modificarla (verificado por `id_user`).
+   * @route PATCH /api/alertas/toggle/:id_alert
+   * @param {Express.Request}  req - Params: `id_alert`. Requiere token.
+   * @param {Express.Response} res - 200 con la alerta actualizada, 404 si no se encuentra, 500 en error.
+   * @returns {Promise<void>}
+   */
   async toggleAlerta(req, res) {
     try {
       const { id_alert } = req.params;
@@ -55,6 +85,13 @@ class AlertController {
     }
   }
 
+  /**
+   * Elimina permanentemente una alerta del usuario autenticado.
+   * @route DELETE /api/alertas/:id_alert
+   * @param {Express.Request}  req - Params: `id_alert`. Requiere token.
+   * @param {Express.Response} res - 200 confirmando la eliminación, o 500 en error.
+   * @returns {Promise<void>}
+   */
   async eliminarAlerta(req, res) {
   try {
     const { id_alert } = req.params;

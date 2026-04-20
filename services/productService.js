@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Servicio del catálogo de productos físicos de metales preciosos.
+ * Calcula el precio de venta en tiempo real a partir del precio spot del mineral subyacente.
+ * @module services/productService
+ */
+
 // services/productService.js
 const { Op } = require('sequelize');
 const mineralService = require('./mineralService');
@@ -9,8 +15,19 @@ const models = initModels(sequelize);
 const Product = models.products;
 const Mineral = models.minerals;
 
+/**
+ * Servicio de negocio para el catálogo de productos físicos de MineX.
+ */
 class ProductService {
-  // Devuelve todos los productos con filtros opcionales
+  /**
+   * Devuelve todos los productos con filtros opcionales.
+   * Los productos exclusivos se ordenan primero; dentro de cada grupo, por nombre ASC.
+   * @param {Object} [filters={}]
+   *   - `type`: tipo de producto (coin | ingot | bar | round).
+   *   - `mineralName`: nombre parcial del mineral (búsqueda LIKE).
+   *   - `exclusive`: si es `true` o `"true"`, devuelve solo productos exclusivos.
+   * @returns {Promise<Array<object>>} Array de productos con datos del mineral asociado.
+   */
   async getAll({ type, mineralName, exclusive } = {}) {
     const where = {};
     const mineralWhere = {};
@@ -35,7 +52,13 @@ class ProductService {
     return products;
   }
 
-  // Devuelve un producto por ID con su precio actual calculado
+  /**
+   * Devuelve un producto por su ID incluyendo el precio de venta calculado.
+   * Fórmula: `spot (USD/g) × peso_en_gramos × (1 + premium_pct / 100)`.
+   * Si la cotización falla, devuelve el producto con `precio_actual: null`.
+   * @param {number} id_product - ID del producto.
+   * @returns {Promise<object|null>} Producto con campo `precio_actual`, o `null` si no existe.
+   */
   async getById(id_product) {
     const product = await Product.findByPk(id_product, {
       include: [

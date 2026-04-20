@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: services/productService.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: services/productService.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @fileoverview Servicio del catálogo de productos físicos de metales preciosos.
+ * Calcula el precio de venta en tiempo real a partir del precio spot del mineral subyacente.
+ * @module services/productService
+ */
+
+// services/productService.js
+const { Op } = require('sequelize');
+const mineralService = require('./mineralService');
+
+const initModels = require('../models/init-models.js').initModels;
+const sequelize = require('../config/sequelize.js');
+const models = initModels(sequelize);
+
+const Product = models.products;
+const Mineral = models.minerals;
+
+/**
+ * Servicio de negocio para el catálogo de productos físicos de MineX.
+ */
+class ProductService {
+  /**
+   * Devuelve todos los productos con filtros opcionales.
+   * Los productos exclusivos se ordenan primero; dentro de cada grupo, por nombre ASC.
+   * @param {Object} [filters={}]
+   *   - `type`: tipo de producto (coin | ingot | bar | round).
+   *   - `mineralName`: nombre parcial del mineral (búsqueda LIKE).
+   *   - `exclusive`: si es `true` o `"true"`, devuelve solo productos exclusivos.
+   * @returns {Promise&lt;Array&lt;object>>} Array de productos con datos del mineral asociado.
+   */
+  async getAll({ type, mineralName, exclusive } = {}) {
+    const where = {};
+    const mineralWhere = {};
+
+    if (type) where.type = type;
+    if (exclusive === 'true' || exclusive === true) where.is_exclusive = true;
+    if (mineralName) mineralWhere.name = { [Op.like]: `%${mineralName}%` };
+
+    const products = await Product.findAll({
+      where,
+      include: [
+        {
+          model: Mineral,
+          as: 'mineral',
+          where: Object.keys(mineralWhere).length ? mineralWhere : undefined,
+          attributes: ['name', 'symbol']
+        }
+      ],
+      order: [['is_exclusive', 'DESC'], ['name', 'ASC']]
+    });
+
+    return products;
+  }
+
+  /**
+   * Devuelve un producto por su ID incluyendo el precio de venta calculado.
+   * Fórmula: `spot (USD/g) × peso_en_gramos × (1 + premium_pct / 100)`.
+   * Si la cotización falla, devuelve el producto con `precio_actual: null`.
+   * @param {number} id_product - ID del producto.
+   * @returns {Promise&lt;object|null>} Producto con campo `precio_actual`, o `null` si no existe.
+   */
+  async getById(id_product) {
+    const product = await Product.findByPk(id_product, {
+      include: [
+        {
+          model: Mineral,
+          as: 'mineral',
+          attributes: ['name', 'symbol']
+        }
+      ]
+    });
+
+    if (!product) return null;
+
+    // Calculamos el precio actual usando el precio spot del mineral
+    let precio_actual = null;
+    try {
+      const cotizacion = await mineralService.getCotizacion(product.mineral.name);
+      if (cotizacion &amp;&amp; cotizacion.precio) {
+        const spot = cotizacion.precio; // precio por gramo
+        const gramos = parseFloat(product.weight_oz) * 31.1035;
+        const premium = 1 + parseFloat(product.premium_pct) / 100;
+        precio_actual = parseFloat((spot * gramos * premium).toFixed(2));
+      }
+    } catch (_) {
+      // Si falla la cotización, devolvemos el producto sin precio
+    }
+
+    return { ...product.toJSON(), precio_actual };
+  }
+}
+
+module.exports = new ProductService();
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-controllers_alertController.html">controllers/alertController</a></li><li><a href="module-controllers_mineralController.html">controllers/mineralController</a></li><li><a href="module-controllers_productController.html">controllers/productController</a></li><li><a href="module-controllers_treasuryController.html">controllers/treasuryController</a></li><li><a href="module-controllers_userController.html">controllers/userController</a></li><li><a href="module-middlewares_authMiddleware.html">middlewares/authMiddleware</a></li><li><a href="module-routes_alertRoutes.html">routes/alertRoutes</a></li><li><a href="module-routes_mineralRoutes.html">routes/mineralRoutes</a></li><li><a href="module-routes_productRoutes.html">routes/productRoutes</a></li><li><a href="module-routes_treasuryRoutes.html">routes/treasuryRoutes</a></li><li><a href="module-routes_userRoutes.html">routes/userRoutes</a></li><li><a href="module-services_alertService.html">services/alertService</a></li><li><a href="module-services_mineralService.html">services/mineralService</a></li><li><a href="module-services_productService.html">services/productService</a></li><li><a href="module-services_treasuryService.html">services/treasuryService</a></li><li><a href="module-services_userService.html">services/userService</a></li><li><a href="module-services_vigilanteService.html">services/vigilanteService</a></li><li><a href="module-utils_logger.html">utils/logger</a></li></ul><h3>Classes</h3><ul><li><a href="module-controllers_alertController-AlertController.html">AlertController</a></li><li><a href="module-controllers_mineralController-MineralController.html">MineralController</a></li><li><a href="module-controllers_productController-ProductController.html">ProductController</a></li><li><a href="module-controllers_treasuryController-TreasuryController.html">TreasuryController</a></li><li><a href="module-controllers_userController-UserController.html">UserController</a></li><li><a href="module-services_alertService-AlertService.html">AlertService</a></li><li><a href="module-services_mineralService-MineralService.html">MineralService</a></li><li><a href="module-services_productService-ProductService.html">ProductService</a></li><li><a href="module-services_treasuryService-TreasuryService.html">TreasuryService</a></li><li><a href="module-services_userService-UserService.html">UserService</a></li><li><a href="module-services_vigilanteService-VigilanteService.html">VigilanteService</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Mon Apr 20 2026 10:19:29 GMT+0200 (hora de verano de Europa central)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

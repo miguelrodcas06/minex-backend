@@ -1,8 +1,25 @@
+/**
+ * @fileoverview Controlador de tesorería: compra, venta y consulta del portfolio de minerales
+ * del usuario autenticado. Delega en {@link module:services/treasuryService}.
+ * @module controllers/treasuryController
+ */
+
 // controllers/treasuryController.js
 const treasuryService = require('../services/treasuryService');
 
+/**
+ * Controlador HTTP para la gestión del portfolio (tesorería) de cada usuario.
+ */
 class TreasuryController {
 
+  /**
+   * Compra gramos de un mineral al precio spot actual y los añade a la tesorería del usuario.
+   * Deduce el coste del balance del usuario.
+   * @route POST /api/tesoreria
+   * @param {Express.Request}  req - Body: `{ mineral, cantidad }`. Requiere token.
+   * @param {Express.Response} res - 201 con el ítem creado y nuevo balance, o 400 en error.
+   * @returns {Promise<void>}
+   */
   async agregar(req, res) {
     try {
       // El ID del usuario lo sacamos de forma segura del Token
@@ -28,6 +45,13 @@ class TreasuryController {
     }
   }
 
+  /**
+   * Devuelve todos los ítems del portfolio del usuario con precios actuales y P&L calculado.
+   * @route GET /api/tesoreria
+   * @param {Express.Request}  req - Requiere token válido.
+   * @param {Express.Response} res - 200 con items y resumen financiero, o 500 en error.
+   * @returns {Promise<void>}
+   */
   async obtenerTesoreria(req, res) {
     try {
       // El Token nos dice quién es el usuario
@@ -46,6 +70,13 @@ class TreasuryController {
       res.status(500).json({ ok: false, mensaje: "Error interno al cargar tu tesorería." });
     }
   }
+  /**
+   * Vende gramos de un ítem de la tesorería al precio spot actual e ingresa el importe en el balance.
+   * @route POST /api/tesoreria/vender
+   * @param {Express.Request}  req - Body: `{ id_item, cantidad }`. Requiere token.
+   * @param {Express.Response} res - 200 con mensaje de éxito y nuevo balance, o 400 en error.
+   * @returns {Promise<void>}
+   */
   async vender(req, res) {
     try {
       // 1. Sacamos el ID del usuario de forma 100% segura desde el Token

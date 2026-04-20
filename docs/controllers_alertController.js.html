@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: controllers/alertController.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: controllers/alertController.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @fileoverview Controlador de alertas de precio: creación, consulta, toggle y eliminación.
+ * Todas las rutas están protegidas por JWT. Delega en {@link module:services/alertService}.
+ * @module controllers/alertController
+ */
+
+const alertService = require("../services/alertService");
+
+/**
+ * Controlador HTTP para la gestión de alertas de precio del usuario.
+ */
+class AlertController {
+
+  /**
+   * Crea una nueva alerta de precio para el usuario autenticado.
+   * @route POST /api/alertas
+   * @param {Express.Request}  req - Body: `{ id_mineral, threshold_price, condition_type }`. Requiere token.
+   * @param {Express.Response} res - 201 con la alerta creada, o 400/500 en error.
+   * @returns {Promise&lt;void>}
+   */
+  async crearAlerta(req, res) {
+    try {
+      const id_user = req.usuario.id_user; 
+      const { id_mineral, threshold_price, condition_type } = req.body;
+
+      if (!id_mineral || !threshold_price || !condition_type) {
+        return res.status(400).json({ ok: false, mensaje: "Faltan datos obligatorios" });
+      }
+
+      const nuevaAlerta = await alertService.crearAlerta({
+        id_user, id_mineral, threshold_price, condition_type
+      });
+
+      res.status(201).json({ ok: true, mensaje: "Alerta creada correctamente", datos: nuevaAlerta });
+    } catch (error) {
+      console.error("Error al crear alerta:", error.message);
+      res.status(500).json({ ok: false, mensaje: "Error al crear alerta" });
+    }
+  }
+
+  /**
+   * Devuelve todas las alertas (activas y pausadas) del usuario autenticado.
+   * @route GET /api/alertas
+   * @param {Express.Request}  req - Requiere token válido.
+   * @param {Express.Response} res - 200 con array de alertas, o 500 en error.
+   * @returns {Promise&lt;void>}
+   */
+  async obtenerAlertasUsuario(req, res) {
+    try {
+      const id_user = req.usuario.id_user;
+      const alertas = await alertService.obtenerAlertasUsuario(id_user);
+      res.status(200).json({ ok: true, cantidad: alertas.length, datos: alertas });
+    } catch (error) {
+      res.status(500).json({ ok: false, mensaje: "Error al obtener alertas" });
+    }
+  }
+
+  /**
+   * Alterna el estado activo/pausado de una alerta del usuario autenticado.
+   * Solo el propietario de la alerta puede modificarla (verificado por `id_user`).
+   * @route PATCH /api/alertas/toggle/:id_alert
+   * @param {Express.Request}  req - Params: `id_alert`. Requiere token.
+   * @param {Express.Response} res - 200 con la alerta actualizada, 404 si no se encuentra, 500 en error.
+   * @returns {Promise&lt;void>}
+   */
+  async toggleAlerta(req, res) {
+    try {
+      const { id_alert } = req.params;
+      const id_user = req.usuario.id_user; // Seguridad: solo el dueño puede tocarla
+
+      const alertaActualizada = await alertService.toggleAlerta(id_alert, id_user);
+
+      res.status(200).json({
+        ok: true,
+        mensaje: `Alerta ${alertaActualizada.is_active ? 'activada' : 'desactivada'} correctamente`,
+        datos: alertaActualizada
+      });
+
+    } catch (error) {
+      console.error("Error en toggleAlerta:", error.message);
+      if (error.message.includes("no encontrada")) {
+        return res.status(404).json({ ok: false, mensaje: error.message });
+      }
+      res.status(500).json({ ok: false, mensaje: "Error al cambiar el estado de la alerta" });
+    }
+  }
+
+  /**
+   * Elimina permanentemente una alerta del usuario autenticado.
+   * @route DELETE /api/alertas/:id_alert
+   * @param {Express.Request}  req - Params: `id_alert`. Requiere token.
+   * @param {Express.Response} res - 200 confirmando la eliminación, o 500 en error.
+   * @returns {Promise&lt;void>}
+   */
+  async eliminarAlerta(req, res) {
+  try {
+    const { id_alert } = req.params;
+    const id_user = req.usuario.id_user;
+
+    await alertService.eliminarAlerta(id_alert, id_user);
+
+    res.status(200).json({ ok: true, mensaje: "Alerta eliminada definitivamente" });
+  } catch (error) {
+    res.status(500).json({ ok: false, mensaje: error.message });
+  }
+}
+}
+
+module.exports = new AlertController();</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-controllers_alertController.html">controllers/alertController</a></li><li><a href="module-controllers_mineralController.html">controllers/mineralController</a></li><li><a href="module-controllers_productController.html">controllers/productController</a></li><li><a href="module-controllers_treasuryController.html">controllers/treasuryController</a></li><li><a href="module-controllers_userController.html">controllers/userController</a></li><li><a href="module-middlewares_authMiddleware.html">middlewares/authMiddleware</a></li><li><a href="module-routes_alertRoutes.html">routes/alertRoutes</a></li><li><a href="module-routes_mineralRoutes.html">routes/mineralRoutes</a></li><li><a href="module-routes_productRoutes.html">routes/productRoutes</a></li><li><a href="module-routes_treasuryRoutes.html">routes/treasuryRoutes</a></li><li><a href="module-routes_userRoutes.html">routes/userRoutes</a></li><li><a href="module-services_alertService.html">services/alertService</a></li><li><a href="module-services_mineralService.html">services/mineralService</a></li><li><a href="module-services_productService.html">services/productService</a></li><li><a href="module-services_treasuryService.html">services/treasuryService</a></li><li><a href="module-services_userService.html">services/userService</a></li><li><a href="module-services_vigilanteService.html">services/vigilanteService</a></li><li><a href="module-utils_logger.html">utils/logger</a></li></ul><h3>Classes</h3><ul><li><a href="module-controllers_alertController-AlertController.html">AlertController</a></li><li><a href="module-controllers_mineralController-MineralController.html">MineralController</a></li><li><a href="module-controllers_productController-ProductController.html">ProductController</a></li><li><a href="module-controllers_treasuryController-TreasuryController.html">TreasuryController</a></li><li><a href="module-controllers_userController-UserController.html">UserController</a></li><li><a href="module-services_alertService-AlertService.html">AlertService</a></li><li><a href="module-services_mineralService-MineralService.html">MineralService</a></li><li><a href="module-services_productService-ProductService.html">ProductService</a></li><li><a href="module-services_treasuryService-TreasuryService.html">TreasuryService</a></li><li><a href="module-services_userService-UserService.html">UserService</a></li><li><a href="module-services_vigilanteService-VigilanteService.html">VigilanteService</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Mon Apr 20 2026 10:19:28 GMT+0200 (hora de verano de Europa central)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

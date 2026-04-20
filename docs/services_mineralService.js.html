@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: services/mineralService.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: services/mineralService.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @fileoverview Servicio de minerales: cotización en tiempo real, histórico de precios
+ * y noticias desde Yahoo Finance. Convierte precios de onzas troy / libras a gramos.
+ * @module services/mineralService
+ */
+
+// services/mineralService.js
+const YahooFinance = require("yahoo-finance2").default;
+const yahooFinance = new YahooFinance();
+
+/**
+ * Servicio que encapsula todas las consultas de datos de metales preciosos a Yahoo Finance.
+ */
+class MineralService {
+  /**
+   * Obtiene el precio spot actual de un mineral en USD/g y opcionalmente lo convierte
+   * a otra divisa usando el tipo de cambio de Yahoo Finance.
+   * @param {string} mineralName - Nombre del mineral (oro | plata | platino | paladio | cobre).
+   * @param {string} [targetCurrency="USD"] - Código ISO 4217 de la divisa destino.
+   * @returns {Promise&lt;{mineral: string, simbolo: string, precio: number, moneda: string, unidad: string, fecha_actualizacion: Date} | null>}
+   *   Datos de cotización o `null` si el mineral no está soportado.
+   */
+  async getCotizacion(mineralName, targetCurrency = "USD") {
+    const diccionarioMinerales = {
+      oro: "GC=F",
+      plata: "SI=F",
+      platino: "PL=F",
+      paladio: "PA=F",
+      cobre: "HG=F",
+    };
+
+    // Factores de conversión
+    const GRAMOS_POR_ONZA_TROY = 31.1034768; // Metales preciosos (GC=F, SI=F, PL=F, PA=F)
+    const GRAMOS_POR_LIBRA     = 453.592;    // Cobre (HG=F) → Yahoo lo cotiza en USD/libra
+
+    const ticker = diccionarioMinerales[mineralName.toLowerCase()];
+    if (!ticker) return null;
+
+    const cotizacion = await yahooFinance.quote(ticker);
+
+    const divisor = ticker === "HG=F" ? GRAMOS_POR_LIBRA : GRAMOS_POR_ONZA_TROY;
+    let precioFinal = cotizacion.regularMarketPrice / divisor;
+
+    let monedaFinal = cotizacion.currency || "USD";
+    let target = targetCurrency.toUpperCase();
+
+    // 2. Si nos piden otra moneda (ej. EUR), hacemos la conversión
+    if (target !== "USD" &amp;&amp; target !== monedaFinal) {
+      const conversionTicker = `${target}=X`;
+
+      try {
+        const conversion = await yahooFinance.quote(conversionTicker);
+        if (conversion &amp;&amp; conversion.regularMarketPrice) {
+          precioFinal = precioFinal * conversion.regularMarketPrice;
+          monedaFinal = target;
+        }
+      } catch (error) {
+        console.log(`⚠️ No se pudo obtener el cambio para ${target}. Se devuelve en USD.`);
+      }
+    }
+
+    return {
+      mineral: mineralName.toLowerCase(),
+      simbolo: ticker,
+      // Usamos 4 decimales porque en gramos el precio es más pequeño y requiere precisión
+      precio: Number(precioFinal.toFixed(4)),
+      moneda: monedaFinal,
+      unidad: "gramo", // Añadimos esto para que quede claro en el JSON
+      fecha_actualizacion: new Date(cotizacion.regularMarketTime),
+    };
+  }
+  /**
+   * Devuelve el histórico de precios de un mineral para el período seleccionado.
+   * Intervalos: 30 d → diario; 12 m / 5 y → mensual (para no saturar la gráfica).
+   * Incluye también el precio actual en tiempo real como `precioActual`.
+   * @param {string} mineralName - Nombre del mineral.
+   * @param {"30d"|"12m"|"5y"} [periodo="12m"] - Período de tiempo deseado.
+   * @returns {Promise&lt;{mineral: string, periodoSeleccionado: string, precioActual: number|null, unidad: string, historico: Array&lt;{fecha: string, precio: number}>} | null>}
+   *   Datos históricos o `null` si el mineral/período no es válido.
+   */
+  async getHistorico(mineralName, periodo = "12m") {
+    const diccionarioMinerales = {
+      oro: "GC=F",
+      plata: "SI=F",
+      platino: "PL=F",
+      paladio: "PA=F",
+      cobre: "HG=F",
+    };
+
+    const GRAMOS_POR_ONZA_TROY = 31.1034768;
+    const GRAMOS_POR_LIBRA     = 453.592;
+    const mineralLower = mineralName.toLowerCase();
+    const ticker = diccionarioMinerales[mineralLower];
+
+    if (!ticker) return null;
+
+    // 1. Calculamos las fechas de inicio y fin
+    const endDate = new Date();
+    let startDate = new Date();
+    let intervalo = "1d"; // '1d' = diario, '1wk' = semanal, '1mo' = mensual
+
+    if (periodo === "30d") {
+      startDate.setDate(endDate.getDate() - 30);
+      intervalo = "1d"; // Queremos un punto por cada día
+    } else if (periodo === "12m") {
+      startDate.setFullYear(endDate.getFullYear() - 1);
+      intervalo = "1mo"; // Queremos un punto por cada mes
+    } else if (periodo === "5y") {
+      startDate.setFullYear(endDate.getFullYear() - 5);
+      intervalo = "1mo"; // También por meses, para no saturar la gráfica (60 puntos)
+    } else {
+      return null; // Período no válido
+    }
+
+    try {
+      // 2. Pedimos el historial REAL a Yahoo Finance
+      const historicalData = await yahooFinance.historical(ticker, {
+        period1: startDate.toISOString().split("T")[0],
+        period2: endDate.toISOString().split("T")[0],
+        interval: intervalo,
+      });
+
+      // 3. Obtenemos el precio exacto de este instante (con tu método)
+      const cotizacionActual = await this.getCotizacion(mineralName);
+      const precioHoy = cotizacionActual ? cotizacionActual.precio : null;
+
+      // 4. Formateamos los datos recibidos
+      const historicoFormateado = historicalData.map((item) => {
+        const divisor = ticker === "HG=F" ? GRAMOS_POR_LIBRA : GRAMOS_POR_ONZA_TROY;
+        let precioEnGramos = item.close / divisor;
+
+        // Damos formato a la fecha dependiendo del período
+        let fechaString = item.date.toISOString().split("T")[0]; // YYYY-MM-DD
+        if (periodo === "12m" || periodo === "5y") {
+          fechaString = fechaString.substring(0, 7); // Dejamos solo YYYY-MM para meses/años
+        }
+
+        return {
+          fecha: fechaString,
+          precio: Number(precioEnGramos.toFixed(4)),
+        };
+      });
+
+      return {
+        mineral: mineralLower,
+        periodoSeleccionado: periodo,
+        precioActual: precioHoy, // El precio exacto en tiempo real
+        unidad: "gramo",
+        historico: historicoFormateado,
+      };
+    } catch (error) {
+      console.error(`🚨 Error obteniendo el histórico real de ${mineralName}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Recupera hasta 6 noticias del mercado de metales desde Yahoo Finance Search.
+   * @param {string} [busqueda="gold market"] - Término de búsqueda para las noticias.
+   * @returns {Promise&lt;Array&lt;{id: string, titulo: string, enlace: string, fuente: string, fecha: string, imagen: string|null}> | null>}
+   *   Array de noticias formateadas, array vacío si no hay resultados, o `null` si hay error.
+   */
+  async getNoticias(busqueda = "gold market") {
+    try {
+      // Le añadimos quotesCount: 0 para que ignore las cotizaciones conflictivas
+      const resultados = await yahooFinance.search(busqueda, {
+        newsCount: 6,
+        quotesCount: 0,
+      });
+
+      // Si Yahoo no devuelve el array de noticias, devolvemos un array vacío
+      if (!resultados || !resultados.news) {
+        return [];
+      }
+
+      // Mapeamos con cuidado usando el operador '?.' para evitar que explote si falta algo
+      const noticiasFormateadas = resultados.news.map((noticia) => {
+        return {
+          id: noticia.uuid || Math.random().toString(), // Por si falta el ID
+          titulo: noticia.title || "Noticia sin título",
+          enlace: noticia.link || "#",
+          fuente: noticia.publisher || "Fuente desconocida",
+          // Verificamos que traiga fecha antes de convertirla
+          // Déjalo así en tu mapeo de noticias:
+          fecha: noticia.providerPublishTime ? new Date(noticia.providerPublishTime).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+          // Forma segura de buscar la imagen
+          imagen: noticia.thumbnail?.resolutions?.[0]?.url || null,
+        };
+      });
+
+      return noticiasFormateadas;
+    } catch (error) {
+      console.error("🚨 Error obteniendo noticias de Yahoo:", error.message);
+      return null;
+    }
+  }
+}
+
+module.exports = new MineralService();
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-controllers_alertController.html">controllers/alertController</a></li><li><a href="module-controllers_mineralController.html">controllers/mineralController</a></li><li><a href="module-controllers_productController.html">controllers/productController</a></li><li><a href="module-controllers_treasuryController.html">controllers/treasuryController</a></li><li><a href="module-controllers_userController.html">controllers/userController</a></li><li><a href="module-middlewares_authMiddleware.html">middlewares/authMiddleware</a></li><li><a href="module-routes_alertRoutes.html">routes/alertRoutes</a></li><li><a href="module-routes_mineralRoutes.html">routes/mineralRoutes</a></li><li><a href="module-routes_productRoutes.html">routes/productRoutes</a></li><li><a href="module-routes_treasuryRoutes.html">routes/treasuryRoutes</a></li><li><a href="module-routes_userRoutes.html">routes/userRoutes</a></li><li><a href="module-services_alertService.html">services/alertService</a></li><li><a href="module-services_mineralService.html">services/mineralService</a></li><li><a href="module-services_productService.html">services/productService</a></li><li><a href="module-services_treasuryService.html">services/treasuryService</a></li><li><a href="module-services_userService.html">services/userService</a></li><li><a href="module-services_vigilanteService.html">services/vigilanteService</a></li><li><a href="module-utils_logger.html">utils/logger</a></li></ul><h3>Classes</h3><ul><li><a href="module-controllers_alertController-AlertController.html">AlertController</a></li><li><a href="module-controllers_mineralController-MineralController.html">MineralController</a></li><li><a href="module-controllers_productController-ProductController.html">ProductController</a></li><li><a href="module-controllers_treasuryController-TreasuryController.html">TreasuryController</a></li><li><a href="module-controllers_userController-UserController.html">UserController</a></li><li><a href="module-services_alertService-AlertService.html">AlertService</a></li><li><a href="module-services_mineralService-MineralService.html">MineralService</a></li><li><a href="module-services_productService-ProductService.html">ProductService</a></li><li><a href="module-services_treasuryService-TreasuryService.html">TreasuryService</a></li><li><a href="module-services_userService-UserService.html">UserService</a></li><li><a href="module-services_vigilanteService-VigilanteService.html">VigilanteService</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Mon Apr 20 2026 10:19:29 GMT+0200 (hora de verano de Europa central)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
