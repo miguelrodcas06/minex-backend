@@ -19,15 +19,12 @@ try {
 const config = {
   port: process.env.PORT || 3000,
   db: {
-    // AQUI ESTÁ EL TRUCO:
-    // 1. Buscamos la variable de Docker (ej: DBHOST)
-    // 2. Si no existe, buscamos la variable local típica (ej: DB_HOST)
-    // 3. Si no, usamos el valor por defecto
+    url: process.env.DATABASE_URL || null,
     host: process.env.DBHOST || process.env.DB_HOST || "localhost",
     user: process.env.DBUSER || process.env.DB_USER || "root",
     password: process.env.DBPASSWORD || process.env.DB_PASSWORD || "test",
     name: process.env.DBNAME || process.env.DB_NAME || "minex",
-    port: process.env.DBPORT || process.env.DB_PORT || 3306,
+    port: process.env.DBPORT || process.env.DB_PORT || 5432,
   },
   secretKey: process.env.SECRET_KEY || "default_secret",
 };
