@@ -5,11 +5,7 @@
  */
 
 // services/mineralService.js
-const YahooFinance = require("yahoo-finance2").default;
-const yahooFinance = new YahooFinance({
-  validation: { logErrors: false },
-  queue: { concurrency: 1, timeout: 30000 },
-});
+const yahooFinance = require("yahoo-finance2").default;
 
 
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutos
