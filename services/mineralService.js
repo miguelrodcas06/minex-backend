@@ -6,20 +6,11 @@
 
 // services/mineralService.js
 const YahooFinance = require("yahoo-finance2").default;
-const yahooFinance = new YahooFinance();
-
-yahooFinance.setGlobalConfig({
+const yahooFinance = new YahooFinance({
   validation: { logErrors: false },
   queue: { concurrency: 1, timeout: 30000 },
-  cookieJar: true,
-  fetchOptions: {
-    headers: {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-      "Accept-Language": "en-US,en;q=0.5",
-    },
-  },
 });
+
 
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutos
 const cache = {};
