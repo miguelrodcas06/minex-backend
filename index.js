@@ -64,7 +64,7 @@ app.get("/", (req, res) => {
 // ============================================
 // SERVICIOS EN SEGUNDO PLANO (CRON JOBS)
 // ============================================
-vigilanteService.iniciar(); // <--- AÑADIR ESTA LÍNEA
+vigilanteService.iniciar();
 
 // ============================================
 // SERVIDOR

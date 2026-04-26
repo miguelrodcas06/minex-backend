@@ -6,13 +6,15 @@ Proyecto de MineX usando node.js para crear la API
 
 [https://github.com/miguelrodcas06/minex-backend](https://github.com/miguelrodcas06/minex-backend)
 
-## Datos para la conexión a la base de datos
+## Base de datos
 
-- *Nombre de la base de datos:* minex
-- *Usuario:* root
-- *Contraseña:* test
-- *Host:* localhost
-- *Puerto:* 3306
+La aplicación usa **Supabase (PostgreSQL)** en producción. Configura la variable de entorno:
+
+```
+DATABASE_URL=postgresql://postgres.[proyecto]:[password]@aws-0-eu-west-1.pooler.supabase.com:5432/postgres
+```
+
+Consulta el archivo `.env.example` para ver todas las variables necesarias.
 
 ## Ejecución del Proyecto
 

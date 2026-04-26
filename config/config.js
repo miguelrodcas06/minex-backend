@@ -29,12 +29,14 @@ const config = {
   secretKey: process.env.SECRET_KEY || "default_secret",
 };
 
-// Logs para verificar qué está leyendo realmente
 logMensaje("--- CONFIGURACIÓN CARGADA ---");
 logMensaje("NODE_ENV:", process.env.NODE_ENV);
-// Imprimimos config.db.host para ver cuál de las dos variables ganó
-logMensaje("DBHOST final:", config.db.host); 
-logMensaje("DBNAME final:", config.db.name);
-logMensaje("DBUSER final:", config.db.user);
+if (config.db.url) {
+  logMensaje("BD: Supabase (DATABASE_URL)");
+} else {
+  logMensaje("DBHOST final:", config.db.host);
+  logMensaje("DBNAME final:", config.db.name);
+  logMensaje("DBUSER final:", config.db.user);
+}
 
 module.exports = config;
