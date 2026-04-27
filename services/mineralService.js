@@ -201,7 +201,17 @@ class MineralService {
         };
       });
 
-      const keywords = busqueda.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
+      const KEYWORDS_MAP = {
+        "gold market":      ["gold", "xau", "bullion"],
+        "silver market":    ["silver", "xag"],
+        "platinum market":  ["platinum", "xpt"],
+        "copper market":    ["copper", "hg"],
+        "precious metals":  ["gold", "silver", "platinum", "palladium", "bullion", "precious"],
+        "mining industry":  ["mining", "mine", "miner", "mineral"],
+      };
+      const GENERIC = ["market", "industry", "news"];
+      const keywords = (KEYWORDS_MAP[busqueda.toLowerCase()] ||
+        busqueda.toLowerCase().split(/\s+/).filter((w) => w.length > 2 && !GENERIC.includes(w)));
       const filtradas = keywords.length
         ? todas.filter((n) => keywords.some((kw) => n.titulo.toLowerCase().includes(kw)))
         : todas;
