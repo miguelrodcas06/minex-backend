@@ -31,7 +31,7 @@ class AlertService {
       id_mineral: id_mineral,
       threshold_price: threshold_price,
       condition_type: condition_type,
-      is_active: 1,
+      is_active: true,
     });
 
     return nuevaAlerta;
@@ -82,7 +82,7 @@ class AlertService {
     }
 
     // Si tiene algo verdadero (1 o true), lo pasamos a 0. Si no, lo pasamos a 1.
-    alerta.is_active = alerta.is_active ? 0 : 1;
+    alerta.is_active = !alerta.is_active;
     await alerta.save();
 
     return alerta;
