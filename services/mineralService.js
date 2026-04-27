@@ -59,7 +59,8 @@ class MineralService {
     const ticker = diccionarioMinerales[mineralName.toLowerCase()];
     if (!ticker) return null;
 
-    const cacheKey = `cotizacion_${ticker}`;
+    const target = targetCurrency.toUpperCase();
+    const cacheKey = `cotizacion_${ticker}_${target}`;
     const cached = getCached(cacheKey);
     if (cached) return cached;
 
@@ -70,7 +71,6 @@ class MineralService {
     const divisor = ticker === "HG=F" ? GRAMOS_POR_LIBRA : GRAMOS_POR_ONZA_TROY;
     let precioFinal = priceData.regularMarketPrice.raw / divisor;
     let monedaFinal = priceData.currency || "USD";
-    const target = targetCurrency.toUpperCase();
 
     if (target !== "USD" && target !== monedaFinal) {
       try {
@@ -183,12 +183,12 @@ class MineralService {
       if (cached) return cached;
 
       const data = await rapidApiFetch("/news/list", {
-        snippetCount: 6,
+        snippetCount: 20,
         region: "US",
       });
 
       const noticias = data?.data?.ntk?.stream || [];
-      const noticiasFormateadas = noticias.slice(0, 6).map((item) => {
+      const todas = noticias.map((item) => {
         const ec = item?.editorialContent || {};
         const c = ec?.content || {};
         return {
@@ -200,6 +200,13 @@ class MineralService {
           imagen: ec.thumbnail?.resolutions?.[1]?.url || ec.thumbnail?.resolutions?.[0]?.url || null,
         };
       });
+
+      const keywords = busqueda.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
+      const filtradas = keywords.length
+        ? todas.filter((n) => keywords.some((kw) => n.titulo.toLowerCase().includes(kw)))
+        : todas;
+
+      const noticiasFormateadas = (filtradas.length >= 3 ? filtradas : todas).slice(0, 6);
 
       setCache(cacheKey, noticiasFormateadas);
       return noticiasFormateadas;
