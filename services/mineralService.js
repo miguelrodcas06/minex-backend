@@ -8,7 +8,7 @@ const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
 const RAPIDAPI_HOST = "yahoo-finance166.p.rapidapi.com";
 const BASE_URL = `https://${RAPIDAPI_HOST}/api`;
 
-const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutos
+const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutos (retraso de Yahoo Finance en datos gratuitos)
 const cache = {};
 
 function getCached(key) {
@@ -176,19 +176,19 @@ class MineralService {
   /**
    * Recupera noticias del mercado de metales.
    */
-  async getNoticias(busqueda = "gold market") {
+  async getNoticias() {
     try {
-      const cacheKey = `noticias_${busqueda}`;
+      const cacheKey = "noticias";
       const cached = getCached(cacheKey);
       if (cached) return cached;
 
       const data = await rapidApiFetch("/news/list", {
-        snippetCount: 20,
+        snippetCount: 6,
         region: "US",
       });
 
       const noticias = data?.data?.ntk?.stream || [];
-      const todas = noticias.map((item) => {
+      const noticiasFormateadas = noticias.slice(0, 6).map((item) => {
         const ec = item?.editorialContent || {};
         const c = ec?.content || {};
         return {
@@ -200,23 +200,6 @@ class MineralService {
           imagen: ec.thumbnail?.resolutions?.[1]?.url || ec.thumbnail?.resolutions?.[0]?.url || null,
         };
       });
-
-      const KEYWORDS_MAP = {
-        "gold market":      ["gold", "xau", "bullion"],
-        "silver market":    ["silver", "xag"],
-        "platinum market":  ["platinum", "xpt"],
-        "copper market":    ["copper", "hg"],
-        "precious metals":  ["gold", "silver", "platinum", "palladium", "bullion", "precious"],
-        "mining industry":  ["mining", "mine", "miner", "mineral"],
-      };
-      const GENERIC = ["market", "industry", "news"];
-      const keywords = (KEYWORDS_MAP[busqueda.toLowerCase()] ||
-        busqueda.toLowerCase().split(/\s+/).filter((w) => w.length > 2 && !GENERIC.includes(w)));
-      const filtradas = keywords.length
-        ? todas.filter((n) => keywords.some((kw) => n.titulo.toLowerCase().includes(kw)))
-        : todas;
-
-      const noticiasFormateadas = (filtradas.length >= 3 ? filtradas : todas).slice(0, 6);
 
       setCache(cacheKey, noticiasFormateadas);
       return noticiasFormateadas;

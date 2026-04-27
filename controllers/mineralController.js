@@ -95,10 +95,7 @@ class MineralController {
   async getNoticias(req, res) {
     try {
       // Atrapamos el tema de búsqueda (por si desde React queremos buscar otra cosa)
-      const { tema } = req.query;
-      const busqueda = tema || "gold market"; // 'gold market' por defecto
-
-      const noticias = await mineralService.getNoticias(busqueda);
+      const noticias = await mineralService.getNoticias();
 
       if (!noticias) {
         return res.status(500).json({
