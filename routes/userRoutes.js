@@ -35,4 +35,8 @@ router.put('/baja', verificarToken, userController.darDeBaja.bind(userController
 // Ruta PÚBLICA: PUT /api/usuarios/reactivar (El usuario despierta su cuenta con sus credenciales)
 router.put('/reactivar', userController.reactivarCuenta.bind(userController));
 
+// Recuperación de contraseña (públicas)
+router.post('/recuperar-password', userController.solicitarRecuperacion.bind(userController));
+router.post('/resetear-password', userController.resetearPassword.bind(userController));
+
 module.exports = router;

@@ -7,18 +7,20 @@
 // services/userService.js
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+const nodemailer = require("nodemailer");
+const { Op } = require("sequelize");
 
-// solo alguien que tenga un Token válido (que haya hecho login)
-// podrá ver la lista de usuarios.
-
-// Recuperar función de inicialización de modelos
 const initModels = require("../models/init-models.js").initModels;
-// Crear la instancia de sequelize con la conexión a la base de datos
 const sequelize = require("../config/sequelize.js");
-// Cargar las definiciones del modelo en sequelize
 const models = initModels(sequelize);
-// Recuperar el modelo user (tu tabla en la base de datos se llama 'users')
 const User = models.users;
+const PasswordResetToken = models.passwordResetTokens;
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+});
 
 /**
  * Capa de negocio para todas las operaciones sobre usuarios de MineX.
@@ -33,6 +35,10 @@ class UserService {
    */
   async crearUsuario(datos) {
     const { username, email, password } = datos;
+
+    if (!password || password.length < 6) {
+      throw new Error("La contraseña debe tener al menos 6 caracteres.");
+    }
 
     // 1. Comprobamos si el correo ya existe en la base de datos
     const usuarioExistente = await User.findOne({ where: { email } });
@@ -217,6 +223,58 @@ class UserService {
         throw new Error("Usuario no encontrado");
     }
     return usuario.balance;
+  }
+
+  async solicitarRecuperacion(email) {
+    const usuario = await User.findOne({ where: { email } });
+    if (!usuario) return; // No revelamos si el email existe
+
+    await PasswordResetToken.destroy({ where: { id_user: usuario.id_user } });
+
+    const token = crypto.randomBytes(32).toString("hex");
+    const expires_at = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+    await PasswordResetToken.create({ id_user: usuario.id_user, token, expires_at });
+
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const enlace = `${frontendUrl}/reset-password?token=${token}`;
+
+    await transporter.sendMail({
+      from: `"MineX" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Recuperación de contraseña - MineX",
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+          <h2 style="color: #e07b39;">Recuperar contraseña de MineX</h2>
+          <p>Hola <b>${usuario.username}</b>,</p>
+          <p>Haz clic en el siguiente botón para restablecer tu contraseña. El enlace expira en <b>1 hora</b>.</p>
+          <a href="${enlace}" style="display:inline-block;margin:20px 0;padding:12px 24px;background:#e07b39;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;">
+            Restablecer contraseña
+          </a>
+          <p style="color:#999;font-size:12px;">Si no solicitaste esto, ignora este correo.</p>
+        </div>
+      `,
+    });
+  }
+
+  async resetearPassword(token, nuevaPassword) {
+    if (!nuevaPassword || nuevaPassword.length < 6) {
+      throw new Error("La contraseña debe tener al menos 6 caracteres.");
+    }
+
+    const resetToken = await PasswordResetToken.findOne({
+      where: { token, used: false, expires_at: { [Op.gt]: new Date() } },
+    });
+    if (!resetToken) throw new Error("El enlace no es válido, ya fue utilizado, o ha expirado.");
+
+    const usuario = await User.findByPk(resetToken.id_user);
+    if (!usuario) throw new Error("Usuario no encontrado.");
+
+    const salt = await bcrypt.genSalt(10);
+    usuario.password_hash = await bcrypt.hash(nuevaPassword, salt);
+    await usuario.save();
+
+    resetToken.used = true;
+    await resetToken.save();
   }
 }
 

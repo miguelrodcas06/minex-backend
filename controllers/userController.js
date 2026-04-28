@@ -207,6 +207,30 @@ class UserController {
       res.status(500).json({ ok: false, mensaje: "Error al consultar el saldo." });
     }
   }
+
+  async solicitarRecuperacion(req, res) {
+    try {
+      const { email } = req.body;
+      if (!email) return res.status(400).json({ ok: false, mensaje: "Introduce tu email." });
+      await userService.solicitarRecuperacion(email);
+      res.json({ ok: true, mensaje: "Si el email existe, recibirás un enlace para restablecer tu contraseña." });
+    } catch (error) {
+      console.error("Error en recuperación:", error.message);
+      res.status(500).json({ ok: false, mensaje: "No se pudo enviar el email. Inténtalo más tarde." });
+    }
+  }
+
+  async resetearPassword(req, res) {
+    try {
+      const { token, password } = req.body;
+      if (!token || !password) return res.status(400).json({ ok: false, mensaje: "Faltan datos." });
+      await userService.resetearPassword(token, password);
+      res.json({ ok: true, mensaje: "Contraseña actualizada correctamente. Ya puedes iniciar sesión." });
+    } catch (error) {
+      console.error("Error al resetear password:", error.message);
+      res.status(400).json({ ok: false, mensaje: error.message });
+    }
+  }
 }
 
 module.exports = new UserController();

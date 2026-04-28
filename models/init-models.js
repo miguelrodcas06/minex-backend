@@ -6,6 +6,7 @@ var _products = require("./products");
 var _treasuries = require("./treasuries");
 var _treasuryItems = require("./treasuryItems");
 var _users = require("./users");
+var _passwordResetTokens = require("./passwordResetTokens");
 
 function initModels(sequelize) {
   var alertNotifications = _alertNotifications(sequelize, DataTypes);
@@ -15,6 +16,7 @@ function initModels(sequelize) {
   var treasuries = _treasuries(sequelize, DataTypes);
   var treasuryItems = _treasuryItems(sequelize, DataTypes);
   var users = _users(sequelize, DataTypes);
+  var passwordResetTokens = _passwordResetTokens(sequelize, DataTypes);
 
   priceAlerts.belongsTo(minerals, { as: "id_mineral_mineral", foreignKey: "id_mineral"});
   minerals.hasMany(priceAlerts, { as: "price_alerts", foreignKey: "id_mineral"});
@@ -37,6 +39,9 @@ function initModels(sequelize) {
   treasuries.belongsTo(users, { as: "id_user_user", foreignKey: "id_user"});
   users.hasMany(treasuries, { as: "treasuries", foreignKey: "id_user"});
 
+  passwordResetTokens.belongsTo(users, { as: "id_user_user", foreignKey: "id_user" });
+  users.hasMany(passwordResetTokens, { as: "password_reset_tokens", foreignKey: "id_user" });
+
   return {
     alertNotifications,
     minerals,
@@ -45,6 +50,7 @@ function initModels(sequelize) {
     treasuries,
     treasuryItems,
     users,
+    passwordResetTokens,
   };
 }
 module.exports = initModels;
