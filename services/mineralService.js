@@ -140,7 +140,7 @@ class MineralService {
       const closes = chartResult.indicators?.quote?.[0]?.close || [];
       const divisor = ticker === "HG=F" ? GRAMOS_POR_LIBRA : GRAMOS_POR_ONZA_TROY;
 
-      const historicoFormateado = timestamps
+      const historicoRaw = timestamps
         .map((ts, i) => {
           if (closes[i] == null) return null;
           const fecha = new Date(ts * 1000);
@@ -154,6 +154,11 @@ class MineralService {
           };
         })
         .filter(Boolean);
+
+      // Deduplicar por fecha manteniendo el último valor (más reciente del mes)
+      const mapaFechas = new Map();
+      for (const punto of historicoRaw) mapaFechas.set(punto.fecha, punto);
+      const historicoFormateado = Array.from(mapaFechas.values());
 
       const cotizacionActual = await this.getCotizacion(mineralName);
       const precioHoy = cotizacionActual ? cotizacionActual.precio : null;
