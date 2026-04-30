@@ -25,13 +25,13 @@ class TreasuryController {
       // El ID del usuario lo sacamos de forma segura del Token
       const idUsuario = req.usuario.id_user; 
       // El mineral y la cantidad nos la envía el usuario en el body
-      const { mineral, cantidad } = req.body;
+      const { mineral, cantidad, precioPersonalizado } = req.body;
 
       if (!mineral || !cantidad || cantidad <= 0) {
         return res.status(400).json({ ok: false, mensaje: 'Debes indicar un mineral válido y una cantidad mayor que 0.' });
       }
 
-      const resultado = await treasuryService.agregarMineral(idUsuario, mineral, cantidad);
+      const resultado = await treasuryService.agregarMineral(idUsuario, mineral, cantidad, precioPersonalizado ?? null);
 
       res.status(201).json({
         ok: true,

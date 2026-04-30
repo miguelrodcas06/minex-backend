@@ -30,50 +30,49 @@ class TreasuryService {
    * @returns {Promise<{ mensaje: string, item: object, detallesCotizacion: object, nuevo_balance: number }>}
    * @throws {Error} Si el mineral no existe, no se puede cotizar o el saldo es insuficiente.
    */
-  async agregarMineral(id_user, nombreMineral, cantidad) {
-    // 1. Buscamos el mineral en la base de datos (ej: "oro")
+  async agregarMineral(id_user, nombreMineral, cantidad, precioPersonalizado = null) {
     const mineralDB = await Mineral.findOne({ where: { name: nombreMineral } });
     if (!mineralDB) {
       throw new Error(`El mineral '${nombreMineral}' no está registrado en la base de datos de MineX.`);
     }
 
-    // 2. Buscamos la tesorería del usuario. Si no tiene, la creamos
-    const [tesoreria] = await Treasury.findOrCreate({
-      where: { id_user: id_user },
-    });
+    const [tesoreria] = await Treasury.findOrCreate({ where: { id_user: id_user } });
 
-    // 3. Consultamos el precio en TIEMPO REAL a Yahoo Finance
-    const datosCotizacion = await mineralService.getCotizacion(nombreMineral);
-    if (!datosCotizacion || !datosCotizacion.precio) {
-      throw new Error(`No se pudo obtener el precio actual de '${nombreMineral}' desde Yahoo Finance.`);
+    let precioCompra;
+    if (precioPersonalizado != null) {
+      precioCompra = parseFloat(precioPersonalizado);
+      if (isNaN(precioCompra) || precioCompra <= 0) {
+        throw new Error("El precio personalizado debe ser un número mayor que 0.");
+      }
+    } else {
+      const datosCotizacion = await mineralService.getCotizacion(nombreMineral);
+      if (!datosCotizacion || !datosCotizacion.precio) {
+        throw new Error(`No se pudo obtener el precio actual de '${nombreMineral}' desde Yahoo Finance.`);
+      }
+      precioCompra = datosCotizacion.precio;
     }
 
-    // 🔴 4. NUEVA LÓGICA: Calculamos el coste y verificamos el saldo
-    const usuario = await User.findByPk(id_user); // (Asegúrate de tener User importado arriba)
-    const costeTotal = cantidad * datosCotizacion.precio;
+    const usuario = await User.findByPk(id_user);
+    const costeTotal = cantidad * precioCompra;
 
-    // Comprobamos si es lo suficientemente rico para esta compra
     if (parseFloat(usuario.balance) < costeTotal) {
       throw new Error(`Saldo insuficiente. La compra cuesta $${costeTotal.toFixed(2)}, pero solo tienes $${parseFloat(usuario.balance).toFixed(2)}.`);
     }
 
-    // 🔴 5. Le restamos el dinero del balance y lo guardamos
     usuario.balance = parseFloat(usuario.balance) - costeTotal;
     await usuario.save();
 
-    // 6. Guardamos el ítem en la tesorería (Creamos el "Ticket de compra")
     const nuevoItem = await TreasuryItem.create({
       id_treasury: tesoreria.id_treasury,
       id_mineral: mineralDB.id_mineral,
       quantity: cantidad,
-      purchase_price: datosCotizacion.precio,
+      purchase_price: precioCompra,
     });
 
     return {
       mensaje: `¡Compra exitosa! Has adquirido ${cantidad}g de ${nombreMineral} por $${costeTotal.toFixed(2)}.`,
       item: nuevoItem,
-      detallesCotizacion: datosCotizacion,
-      nuevo_balance: usuario.balance
+      nuevo_balance: usuario.balance,
     };
   }
 
