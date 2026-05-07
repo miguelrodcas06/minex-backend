@@ -35,7 +35,9 @@ class VigilanteService {
   constructor() {
     // Configuramos el "cartero" de Nodemailer
     this.transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
@@ -168,7 +170,7 @@ class VigilanteService {
     cron.schedule("*/15 * * * *", () => {
       this.revisarAlertas();
     });
-    console.log("🕵️‍♂️ Vigilante de alertas INICIADO (Revisando precios cada minuto).");
+    console.log("🕵️‍♂️ Vigilante de alertas INICIADO (Revisando precios cada 15 minutos).");
   }
 }
 
