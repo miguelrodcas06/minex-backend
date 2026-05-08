@@ -8,8 +8,8 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const nodemailer = require("nodemailer");
 const { Op } = require("sequelize");
+const { Resend } = require("resend");
 
 const initModels = require("../models/init-models.js").initModels;
 const sequelize = require("../config/sequelize.js");
@@ -17,12 +17,7 @@ const models = initModels(sequelize);
 const User = models.users;
 const PasswordResetToken = models.passwordResetTokens;
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
-  auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 /**
  * Capa de negocio para todas las operaciones sobre usuarios de MineX.
@@ -240,8 +235,8 @@ class UserService {
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
     const enlace = `${frontendUrl}/reset-password?token=${token}`;
 
-    await transporter.sendMail({
-      from: `"MineX" <${process.env.EMAIL_USER}>`,
+    await resend.emails.send({
+      from: "MineX <onboarding@resend.dev>",
       to: email,
       subject: "Recuperación de contraseña - MineX",
       html: `

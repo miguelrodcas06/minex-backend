@@ -7,7 +7,7 @@
 
 // services/vigilanteService.js
 const cron = require("node-cron");
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
 // 1. Importamos TU servicio de minerales en lugar de Yahoo directamente
 const mineralService = require("./mineralService");
@@ -33,16 +33,7 @@ class VigilanteService {
    * Las variables `EMAIL_USER` y `EMAIL_PASS` deben estar definidas en `.env`.
    */
   constructor() {
-    // Configuramos el "cartero" de Nodemailer
-    this.transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+    this.resend = new Resend(process.env.RESEND_API_KEY);
   }
 
   /**
@@ -133,29 +124,26 @@ class VigilanteService {
   async enviarCorreo(email, usuario, mineral, precioActual, precioObjetivo, condicion) {
     const direccion = condicion === "above" ? "superado" : "caído por debajo de";
 
-    const mailOptions = {
-      from: `"MineX Alerts" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: `🚨 Alerta MineX: ¡${mineral} ha alcanzado tu objetivo!`,
-      html: `
-        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-          <h2 style="color: #D4AF37;">¡Hola ${usuario}! 👑</h2>
-          <p>Tu alerta programada en <b>MineX</b> acaba de dispararse.</p>
-          <p>El precio del <b>${mineral}</b> ha ${direccion} tu objetivo de <b>$${precioObjetivo}/g</b>.</p>
-          <div style="background-color: #f4f4f4; padding: 15px; border-radius: 8px; margin: 20px 0;">
-            <p style="margin: 0; font-size: 18px;">Precio de cruce actual: <b>$${precioActual}/g</b></p>
-          </div>
-          <p>Entra en tu panel de MineX para revisar tus tesoros y decidir tu próximo movimiento.</p>
-        </div>
-      `,
-    };
-
     try {
-      await this.transporter.sendMail(mailOptions);
+      await this.resend.emails.send({
+        from: "MineX <onboarding@resend.dev>",
+        to: email,
+        subject: `Alerta MineX: ${mineral} ha alcanzado tu objetivo`,
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+            <h2 style="color: #D4AF37;">¡Hola ${usuario}!</h2>
+            <p>Tu alerta programada en <b>MineX</b> acaba de dispararse.</p>
+            <p>El precio del <b>${mineral}</b> ha ${direccion} tu objetivo de <b>$${precioObjetivo}/g</b>.</p>
+            <div style="background-color: #f4f4f4; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 0; font-size: 18px;">Precio de cruce actual: <b>$${precioActual}/g</b></p>
+            </div>
+            <p>Entra en tu panel de MineX para revisar tus tesoros y decidir tu próximo movimiento.</p>
+          </div>
+        `,
+      });
       console.log(`📧 Email de alerta enviado con éxito a ${email}`);
     } catch (error) {
-      // Solo mostramos un aviso si falla el email, pero la BD ya se actualizó
-      console.log(`⚠️ Alerta registrada en BD, pero no se pudo enviar el email a ${email} (Falta configurar .env)`);
+      console.log(`⚠️ Alerta registrada en BD, pero no se pudo enviar el email a ${email}:`, error.message);
     }
   }
 
